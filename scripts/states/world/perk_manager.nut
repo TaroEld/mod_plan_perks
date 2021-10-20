@@ -27,8 +27,10 @@ this.perk_manager <- {
 	function importSinglePerkBuild(_code){
 		return split(_code, this.m.ForbiddenSign)
 	}
-	function exportSinglePerkBuild(_name){
-		local perks = this.m.PerkBuilds[_name];
+	function exportSinglePerkBuild(_code){
+		local perks;
+		if(typeof _code == "array") perks = _code;
+		else perks = this.m.PerkBuilds[_name];
 		local resultString = ""
 		foreach(key in perks){
 			resultString += key + this.m.ForbiddenSign;
@@ -39,6 +41,9 @@ this.perk_manager <- {
 
 	function addPerkBuild(_name, _code){
 		this.m.PerkBuilds[_name] <- clone _code
+	}
+	function removePerkBuild(_name){
+		this.m.PerkBuilds.rawdelete(_name) 
 	}
 
 	function loadPerkBuild(_name){

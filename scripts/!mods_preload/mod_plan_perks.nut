@@ -53,7 +53,9 @@ local modName = "mod_plan_perks"
 			this.m.SelectedPerks = []
 			this.getContainer().getActor().getFlags().set("selectedPerks", true)
 		}
-		o.getCurrentPerks <- function(){
+		o.getSelectedPerks <- function(){
+			this.logInfo("getSelectedPerks")
+			::printData(this.m.SelectedPerks)
 			return this.m.SelectedPerks
 		}
 
@@ -84,7 +86,6 @@ local modName = "mod_plan_perks"
 	::mods_hookExactClass("entity/tactical/player", function(o){
 		local onSerialize = o.onSerialize	
 		o.onSerialize = function(_out){
-			this.logInfo(_out)
 			onSerialize(_out)
 			if(this.getFlags().get("selectedPerks")){
 				local selectedPerks = this.getBackground().m.SelectedPerks
@@ -126,23 +127,236 @@ local modName = "mod_plan_perks"
 		o.onSaveSelectedPerks <- function(_data){
 			//_data = _entity, _perk, _bool
 			local brother = this.Tactical.getEntityByID(_data[0])
-			this.World.Perks.addPerkBuild(_data[1], brother.getBackground().getCurrentPerks())
+			this.World.Perks.addPerkBuild(_data[1], brother.getBackground().getSelectedPerks())
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
-		o.onLoadAllSelectedPerks <- function(){
-			//_data = _entity, _perk, _bool
-			return this.World.Perks.getAllPerkBuilds()
+		o.onLoadAllSelectedPerks <- function(_data){
+			this.logInfo("in onLoadAllSelectedPerks")
+			local result = {perks = this.World.Perks.getAllPerkBuilds()}
+			::printData(result)
+			return result
 		}
-		o.onLoadSelectedPerks <- function(_data){
+		o.onLoadSelectedPerksFromName <- function(_data){
 			local brother = this.Tactical.getEntityByID(_data[0])
-			brother.getBackground().setSelectedPerks(_data[1])
+			brother.getBackground().setSelectedPerks(this.World.Perks.loadPerkBuild(_data[1]))
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
 		o.onLoadSelectedPerksFromCode <-function(_data){
+			//data = brotherID, perkBuildID
+			this.logInfo("onLoadSelectedPerksFromCode, code: " + _data[1])
 			local brother = this.Tactical.getEntityByID(_data[0])
-			local parsedData = this.World.Perks.parseCodeFromHash(_data[1])
+			local parsedData = this.World.Perks.importSinglePerkBuild(_data[1])
 			brother.getBackground().setSelectedPerks(parsedData)
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
+		o.onCopyCurrentPerks <- function(_data){
+			//data = brotherID
+			local brother = this.Tactical.getEntityByID(_data[0])
+			local parsedData = this.World.Perks.exportSinglePerkBuild(brother.getBackground().getSelectedPerks())
+			this.logInfo("parsedData" + parsedData)
+			local result = {code = parsedData}
+			return result
+		}
+		o.onCopyPerksFromName <- function(_data){
+			//_data = perkBuildID
+			local parsedData = this.World.Perks.exportSinglePerkBuild(this.World.Perks.loadPerkBuild(_data[0]))
+			local result = {code = parsedData}
+			return result
+		}
+		o.onDeletePerks <- function(_data){
+			//data = perkBuildID
+			this.World.Perks.removePerkBuild(_data[0])
+		}
 	})
+
+	::mods_hookNewObject("ui/screens/tooltip/tooltip_events", function ( o )
+	{
+		local general_queryUIElementTooltipData = o.general_queryUIElementTooltipData
+		o.general_queryUIElementTooltipData = function( _entityId, _elementId, _elementOwner )
+		{
+			local entity;
+
+			if (_entityId != null)
+			{
+				entity = this.Tactical.getEntityByID(_entityId);
+			}
+
+			switch(_elementId)
+			{
+				case "mod-plan-perks.save-perks-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Open perks menu"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Open the menu to save and load perk builds."
+						}
+					];
+
+				case "mod-plan-perks.clear-perks-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Reset perks"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Clear all selected perks for this brother."
+						}
+					];
+				case "mod-plan-perks.menu.save-perks-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Save current perks"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Save the currently selected perks of this brother under a new build."
+						}
+					];
+
+				case "mod-plan-perks.menu.copy-perks-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Copy current perks"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Copy the currently selected perks of this brother to your clipboard."
+						}
+					];
+				case "mod-plan-perks.menu.paste-perks-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Copy current perks"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Paste contents of your clipboard to the input field."
+						}
+					];
+				case "mod-plan-perks.menu.load-single-build-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Load perk build"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Load a perk build onto the current brother based on the code in the input field."
+						}
+					];
+				case "mod-plan-perks.menu.load-all-builds-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Load all perk builds"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Create many perk builds and save them based on the code in the input field."
+						}
+					];
+				case "mod-plan-perks.menu.list.load-perks-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Load perk build"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Load the perk build onto the current brother."
+						}
+					];
+				case "mod-plan-perks.menu.list.copy-perks-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Copy perk build"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Copy the code of the perk build."
+						}
+					];
+
+				case "mod-plan-perks.menu.list.delete-perks-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Delete perk build"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Delete the perk build."
+						}
+					];
+				case "mod-plan-perks.menu.override-perks-toggle":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Toggle override"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "If this is selected, selected perks will be overriden if you load a new build. Otherwise, the perks will be added to the already selected perks."
+						}
+					];
+				case "mod-plan-perks.menu.perk-build-name-input":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Perk build name"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Enter the name of a new build that you wish to save."
+						}
+					];
+				case "mod-plan-perks.menu.perk-code-input":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Enter Code"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Enter perk build code, either of a single build or of many builds."
+						}
+					];
+			}
+			return general_queryUIElementTooltipData( _entityId, _elementId, _elementOwner )
+		}
+	});
 })

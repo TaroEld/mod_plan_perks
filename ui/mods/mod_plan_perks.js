@@ -1,31 +1,15 @@
 
-/*var CharacterScreenPerksModule = function(_parent, _dataSource)
-{
-    this.mParent = _parent;
-    this.mDataSource = _dataSource;
 
-	// container
-	this.mContainer = null;
-
-    this.mLeftColumn = null;
-    this.mMiddleColumn = null;
-    this.mRightColumn = null;
-
-    // perks
-    this.mPerkTree = null;
-    this.mPerkRows = [];
-
-    // buttons
-    this.mPerkPlanningPanel = null;
-    this.mPerkPlanningContainer = null;
-    this.mResetPlannedPerksButton = null;
-    this.mSavePerksButton = null;
-    this.mLoadPerksButton = null;
-
-    this.registerDatasourceListener();
-};*/
 CharacterScreenPerksModule.prototype.createDIV = function (_parentDiv)
 {
+	if(!("perks.saved-list-loaded" in this.mDataSource.mEventListener)){
+		this.mDataSource.mEventListener['perks.saved-list-loaded'] = [ ];
+		this.mDataSource.addListener('perks.saved-list-loaded', jQuery.proxy(this.setupPerkList, this));
+		console.error("added listener")
+	}
+	else{
+		console.error("didn't add listener")
+	}
 	var self = this;
 	// create: containers (init hidden!)
 	this.mContainer = $('<div class="perks-module opacity-none"/>');
@@ -74,195 +58,353 @@ CharacterScreenPerksModule.prototype.createDIV = function (_parentDiv)
 	    }
     	self.mDataSource.notifyBackendClearPerksButtonClicked(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], callback);
     }, '', 3);
+    this.mResetPlannedPerksButton.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.clear-perks-button" });
 
     var layout = $('<div class="l-button is-all-filter"/>');
     this.mPerkPlanningPanel.append(layout);
     this.mSavePerksButton = layout.createImageButton(Path.GFX + Asset.BUTTON_ALL_FILTER, function ()
     {
-        self.showSavePerksDialog();
+        self.showSaveAndLoadPerksDialog();
     }, '', 3);
-
-    var layout = $('<div class="l-button is-weapons-filter"/>');
-    this.mPerkPlanningPanel.append(layout);
-    this.mLoadPerksButton = layout.createImageButton(Path.GFX + Asset.BUTTON_WEAPONS_FILTER, function ()
-    {
-        self.showLoadPerksDialog();
-    }, '', 3);
+    this.mSavePerksButton.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.save-perks-button" });
     
 };
 
-CharacterScreenPerksModule.prototype.showLoadPerksDialog = function()
+CharacterScreenPerksModule.prototype.showSaveAndLoadPerksDialog = function()
 {
     this.mDataSource.notifyBackendPopupDialogIsVisible(true);
     var self = this;
-    var popupDialog = $('.character-screen').createPopupDialog('Load Perks', null, null, 'load-perks-popup');
-    popupDialog.addPopupDialogContent(this.createLoadPerksDialogContent(popupDialog));
-    popupDialog.addPopupDialogCancelButton(function (_dialog)
+    this.mPopupDialog = $('.character-screen').createPopupDialog('Save and Load Perks', null, null, 'save-and-load-perks-popup');
+    this.mPopupDialog.addPopupDialogContent(this.createSaveAndLoadPerksDialogContent(this.mPopupDialog));
+    this.mPopupDialog.addPopupDialogCancelButton(function (_dialog)
     {
         _dialog.destroyPopupDialog();
         self.mDataSource.notifyBackendPopupDialogIsVisible(false);
     });
 
-
 };
 
-/*
-CharacterScreenPerksModule.prototype.showLoadPerksDialog = function()
-{
-    this.mDataSource.notifyBackendPopupDialogIsVisible(true);
-    var self = this;
-    var popupDialog = $('.character-screen').createPopupDialog('Load Perks', null, null, 'load-perks-popup');
-    popupDialog.addPopupDialogContent(this.createLoadPerksDialogContent(popupDialog));
-    popupDialog.addPopupDialogCancelButton(function (_dialog)
-    {
-        _dialog.destroyPopupDialog();
-        self.mDataSource.notifyBackendPopupDialogIsVisible(false);
-    });
-
-
-};*/
-
-CharacterScreenPerksModule.prototype.showSavePerksDialog = function()
-{
-    this.mDataSource.notifyBackendPopupDialogIsVisible(true);
-
-    var self = this;
-    var popupDialog = $('.character-screen').createPopupDialog('Save Perks', null, null, 'save-perks-popup');
-    
-   
-    
-    popupDialog.addPopupDialogButton('Save', 'l-ok-button', jQuery.proxy(function (_dialog)
-    {
-    	var contentContainer = _dialog.findPopupDialogContentContainer();
-    	var inputFields = contentContainer.find('input');
-    	self.mDataSource.notifyBackendSaveCurrentPerks(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], $(inputFields[0]).getInputText());
-        _dialog.destroyPopupDialog();
-        self.mDataSource.notifyBackendPopupDialogIsVisible(false);
-    }, this));
-
-    popupDialog.addPopupDialogCancelButton(function (_dialog)
-    {
-        _dialog.destroyPopupDialog();
-        self.mDataSource.notifyBackendPopupDialogIsVisible(false);
-    });
-
-     popupDialog.addPopupDialogContent(this.createSavePerksDialogContent(popupDialog));
-};
-
-CharacterScreenPerksModule.prototype.createSavePerksDialogContent = function (_dialog)
+CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = function (_dialog)
 {
 
-    var result = $('<div class="save-perks-container"/>');
-    // create & set name
-    var row = $('<div class="row"/>');
-    result.append(row);
-    var label = $('<div class="label text-font-normal font-color-label font-bottom-shadow">Name</div>');
-    row.append(label);
-
+    var result = $('<div class="save-and-load-perks-container"/>');
 	var self = this;
 
-    var inputLayout = $('<div class="l-input"/>');
-    row.append(inputLayout);
-    var inputField = inputLayout.createInput('', 0, 9999, 1, function (_input)
-	{
-        _dialog.findPopupDialogOkButton().enableButton(_input.getInputTextLength() >= Constants.Game.MIN_BROTHER_NAME_LENGTH);
-    }, 'title-font-big font-bold font-color-brother-name', function (_input)
-	{
-		var button = _dialog.findPopupDialogOkButton();
-		if(button.isEnabled())
-		{
-			button.click();
-		}
-	});
-    return result;
-};
-
-CharacterScreenPerksModule.prototype.createLoadPerksDialogContent = function (_dialog)
-{
-
-
-    var result = $('<div class="save-and-load-perks-popup"/>');
-	var self = this;
-
-	var savePerksContainer = $('<div class="save-perks-from-code-container"/>');
+	//SAVE PERKS DIV -------------------------------------------------------------------------------------------------------------------------------------------------
+	var savePerksContainer = $('<div class="save-perks-container"/>');
 	result.append(savePerksContainer)
-	var loadPerksContainer = $('<div class="load-perks-from-code-container"/>');
+
+	var header = $('<div class="header has-no-sub-title"/>');
+	savePerksContainer.append(header);
+	var titleTextContainer = $('<div class="text-container"/>');
+	header.append(titleTextContainer);
+	var title = $('<div class="title title-font-very-big font-bold font-bottom-shadow font-color-title">Save Perks</div>');
+	titleTextContainer.append(title)
+
+	var savePerksFromCodeContainer = $('<div class="save-perks-from-code-container"/>');
+	savePerksContainer.append(savePerksFromCodeContainer)
+
+	//input name for current build
+    var inputLayout = $('<div class="l-input"/>');
+    savePerksFromCodeContainer.append(inputLayout);
+    var inputField = inputLayout.createInput('', 0, 9999, 1, null, 'title-font-big font-bold font-color-brother-name');
+    inputField.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.perk-build-name-input" });
+
+    //save current build button
+	var buttonLayout = $('<div class="l-button"/>');
+	savePerksFromCodeContainer.append(buttonLayout);
+	var button = buttonLayout.createTextButton("Save Perks", function ()
+    {
+		var callback = function (data)
+	    {
+	    	self.mDataSource.notifyBackendLoadSavedPerks()
+	        // check if we have an error
+	        if (ErrorCode.Key in data)
+	        {
+	            self.notifyEventListener(ErrorCode.Key, data[ErrorCode.Key]);
+	        }
+	        else
+	        {
+	            // find the brother and update him
+	            if (CharacterScreenIdentifier.Entity.Id in data)
+	            {
+	                self.mDataSource.updateBrother(data);
+	            }
+	            else
+	            {
+	                console.error('ERROR: Failed to update brother. Invalid data result.');
+	            }
+	        }
+	    }
+	    var contentContainer = self.mPopupDialog.findPopupDialogContentContainer();
+	    var inputFields = contentContainer.find('input');
+        self.mDataSource.notifyBackendSaveCurrentPerks(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], $(inputFields[0]).getInputText(), callback);
+    }, '', 1)
+    button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.save-perks-button" });
+
+	//copy current build code
+    buttonLayout = $('<div class="l-button"/>');
+    savePerksFromCodeContainer.append(buttonLayout)
+	button = buttonLayout.createTextButton("Copy Code", function ()
+    {
+	    
+    	var callback = function (data)
+        {
+        	var code = data.code
+        	console.error(code)
+            var contentContainer = self.mPopupDialog.findPopupDialogContentContainer();
+	    	var inputFields = contentContainer.find('input');
+	    	$(inputFields[0]).setInputText(code);
+	    	$(inputFields[0]).select()
+	    	document.execCommand('copy');
+	    	$(inputFields[0]).setInputText("");
+        }
+        self.mDataSource.notifyBackendCopyCurrentPerks(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], callback);
+
+    }, '', 1)
+    button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.copy-perks-button" });
+    
+
+
+
+
+
+    //LOAD PERKS DIV -----------------------------------------------------------------------------------------------------------------------------------------
+
+	var loadPerksContainer = $('<div class="load-perks-container"/>');
 	result.append(loadPerksContainer)
 
+	//header
+	header = $('<div class="header has-no-sub-title put-border-top"/>');
+	loadPerksContainer.append(header);
+	titleTextContainer = $('<div class="text-container"/>');
+	header.append(titleTextContainer);
+	title = $('<div class="title title-font-very-big font-bold font-bottom-shadow font-color-title">Load Perks</div>');
+	titleTextContainer.append(title)
+
+	var loadPerksFromCodeContainer = $('<div class="load-perks-from-code-container"/>');
+	loadPerksContainer.append(loadPerksFromCodeContainer)
 	//load one perk build
     var inputLayout = $('<div class="l-input"/>');
-    loadPerksContainer.append(inputLayout);
+    loadPerksFromCodeContainer.append(inputLayout);
     var inputCodeField = inputLayout.createInput('', 0, 9999, 1, function (_input)
 	{
     }, 'title-font-big font-bold font-color-brother-name', function (_input)
 	{
 	});
-
+	inputCodeField.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.perk-code-input" });
 
 	var buttonLayout = $('<div class="l-button"/>');
-	loadPerksContainer.append(buttonLayout);
-	
-	var button = buttonLayout.createTextButton("load one perk", function ()
+	loadPerksFromCodeContainer.append(buttonLayout);
+	var button = buttonLayout.createTextButton("paste clipboard", function ()
     {
-
-	    var contentContainer = _dialog.findPopupDialogContentContainer();
+	    var contentContainer = self.mPopupDialog.findPopupDialogContentContainer();
 	    var inputFields = contentContainer.find('input');
-		console.error($(inputFields[0]).getInputText())
-        self.mDataSource.notifyBackendLoadPerks(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], $(inputFields[0]).getInputText());
-        //_dialog.destroyPopupDialog();
-        self.mDataSource.notifyBackendPopupDialogIsVisible(false);
-    })
-
-	//load all perk builds
-    inputLayout = $('<div class="l-input"/>');
-    loadPerksContainer.append(inputLayout);
-    var inputAllCodesField = inputLayout.createInput('', 0, 9999, 1, function (_input)
-	{
-    }, 'title-font-big font-bold font-color-brother-name', function (_input)
-	{
-	});
+    	$(inputFields[1]).select()
+    	document.execCommand('paste');
+    }, '', 1)
+    button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.paste-perks-button" });
 
 
 	buttonLayout = $('<div class="l-button"/>');
-	loadPerksContainer.append(buttonLayout);
+	loadPerksFromCodeContainer.append(buttonLayout);
 	
-	button = buttonLayout.createTextButton("load all perk")
+	button = buttonLayout.createTextButton("Load one build", function ()
+    {
+		var callback = function (data)
+	    {
+
+	        // check if we have an error
+	        if (ErrorCode.Key in data)
+	        {
+	            self.notifyEventListener(ErrorCode.Key, data[ErrorCode.Key]);
+	        }
+	        else
+	        {
+	            // find the brother and update him
+	            if (CharacterScreenIdentifier.Entity.Id in data)
+	            {
+	                self.mDataSource.updateBrother(data);
+	            }
+	            else
+	            {
+	                console.error('ERROR: Failed to update brother. Invalid data result.');
+	            }
+	        }
+	    }
+
+	    var contentContainer = self.mPopupDialog.findPopupDialogContentContainer();
+	    var inputFields = contentContainer.find('input');
+        self.mDataSource.notifyBackendLoadPerksFromCode(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], $(inputFields[1]).getInputText(), callback);
+    }, '', 1)
+    button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.load-single-build-button" });
+
+	buttonLayout = $('<div class="l-button"/>');
+	loadPerksFromCodeContainer.append(buttonLayout);
+	
+	button = buttonLayout.createTextButton("Load many builds", function ()
+    {
+    }, '', 1)
+    button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.load-all-builds-button" });
+
+	//toggle override
+	var toggleContainer = $('<div class="control"/>');
+	loadPerksFromCodeContainer.append(toggleContainer);
+	var overrideToggle = $('<input type="checkbox" id="override-toggle"/>');
+	toggleContainer.append(overrideToggle);
+	var overrideLabel = $('<label class="text-font-normal font-color-subtitle" for="override-toggle">Override current selection</label>');
+	toggleContainer.append(overrideLabel);
+	overrideToggle.iCheck(
+	{
+	    checkboxClass: 'icheckbox_flat-orange',
+	    radioClass: 'iradio_flat-orange',
+	    increaseArea: '30%'
+	}, '', 1)
+	toggleContainer.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.override-perks-toggle" });
+	
+	
+
 
 	//scroll container
+
 	var listContainerLayout = $('<div class="l-list-container"/>');
-	result.append(listContainerLayout)
-	var listScrollContainer = listContainerLayout.findListScrollContainer();
+	loadPerksContainer.append(listContainerLayout)
+	this.mListContainer = listContainerLayout.createList(1.0, null, true);
+	this.mListScrollContainer = this.mListContainer.findListScrollContainer();
+	this.mDataSource.notifyBackendLoadSavedPerks()
 
     return result;
     
 };
-
-CharacterScreenPerksModule.prototype.fillLoadPerksScrollContainer = function (_dialog){
-	var perkBuilds = this.mDataSource.notifyBackendLoadSavedPerks()
-	for(var idx = 0; idx < perkBuilds.length; idx++){
-		var perkBuildName = perkBuilds[idx] //fix thix
-		var row = $('<div class="row"/>');
-		_dialog.append(row)
-		var label = $('<div class="label text-font-normal font-color-label font-bottom-shadow">' + perkBuildName + '</div>');
-		row.append(label);
-		//load perk button
-		var buttonLayout = $('<div class="l-ok-button"/>');
-		row.append(buttonLayout);
-		buttonLayout.createTextButton(_label, jQuery.proxy(function ()
-			{
-			    _callback(this);
-			}, this), '', 1);
-		//delete perk button
-		var buttonLayout = $('<div class="l-ok-button"/>');
-		row.append(buttonLayout);
-		buttonLayout.createTextButton(_label, jQuery.proxy(function ()
-			{
-			    _callback(this);
-			}, this), '', 1);
+CharacterScreenPerksModule.prototype.setupPerkList = function(_datasource, _data){
+	if (this.mListScrollContainer === undefined){
+		console.error("mListScrollContainer undefined")
+		return
 	}
-	return result
+	this.mListScrollContainer.empty()
 
+	var brother = this.mDataSource.getSelectedBrother()
+
+
+	var divResultList = []
+	
+	for (var key in _data){
+	  divResultList.push(this.addListEntry(key))
+	}
+	
+	divResultList.sort(function(a, b) {
+	  return b.numOfMatchingPerks - a.numOfMatchingPerks;
+	}); 
+
+
+	for (var div in divResultList){
+		this.mListScrollContainer.append(divResultList[div].div);
+	}
 }
+CharacterScreenPerksModule.prototype.addListEntry = function (_data)
+{
+	var self = this;
+	var brother = this.mDataSource.getSelectedBrother()
+	var brotherPerks = brother[CharacterScreenIdentifier.Perk.Key]
+
+	var isPerkUnlocked = function(_perksUnlocked, _perkID) {
+		for (var j = 0; j < _perksUnlocked.length; ++j)
+		{
+			if(_perksUnlocked[j] == _perkID)
+			{
+				return true
+			}
+		}
+		return false
+	}
+	var numPerks = 0;
+
+
+	var perkBuild = this.mDataSource.mSavedPerkBuilds[_data]
+	var result = $('<div class="l-row"/>');
+	var entry = $('<div class="ui-control list-entry"/>');
+	result.append(entry)
+	var nameContainer = $('<div class="l-perk-name-container"/>');
+	entry.append(nameContainer)
+	var name = $('<div class="name text-font-normal font-color-description perk-name">' + _data + '</div>');
+	nameContainer.append(name);
+	var perkImageContainer = $('<div class="l-perk-image-container"/>');
+	entry.append(perkImageContainer);
+	for (var x = 0; x < perkBuild.length; x++){
+		var perkID = perkBuild[x]
+		var isUnlocked = isPerkUnlocked(brotherPerks, perkID)
+		var perkImage = $('<img class="perk-image"/>');
+		if (isUnlocked === true){
+			perkImage.attr('src', Path.GFX + this.mPerksToImageDict[perkID].unlocked);
+			numPerks++
+		}
+		else{
+			perkImage.attr('src', Path.GFX + this.mPerksToImageDict[perkID].locked);
+		}
+		perkImage.unbindTooltip();
+		perkImage.bindTooltip({ contentType: 'ui-perk', entityId: brother[CharacterScreenIdentifier.Entity.Id], perkId: perkID });
+		perkImageContainer.append(perkImage);
+	}
+
+	var buttonContainer = $('<div class="l-perk-button-container"/>');
+	entry.append(buttonContainer)
+
+	var buttonLayout = $('<div class="l-button"/>');
+	buttonContainer.append(buttonLayout);
+	
+	var button = buttonLayout.createTextButton("load", function ()
+    {
+		var callback = function (data)
+	    {
+	    	self.mDataSource.updateBrother(data);
+	    }
+	    console.error("Called load function. Name of build : " + _data)
+        self.mDataSource.notifyBackendLoadPerksFromName(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], _data, callback);
+    }, '', 1)
+	button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.list.load-perks-button" });
+
+	buttonLayout = $('<div class="l-button"/>');
+	buttonContainer.append(buttonLayout);
+	
+	button = buttonLayout.createTextButton("copy code", function ()
+    {
+    	var callback = function (data)
+        {
+        	var code = data.code
+            var contentContainer = self.mPopupDialog.findPopupDialogContentContainer();
+	    	var inputFields = contentContainer.find('input');
+	    	$(inputFields[0]).setInputText(code);
+	    	$(inputFields[0]).select()
+	    	document.execCommand('copy');
+	    	$(inputFields[0]).setInputText("");
+        }
+        console.error("Called copy code in build function. Name of build : " + _data)
+        self.mDataSource.notifyBackendCopyPerksFromName(_data, callback);
+    }, '', 1)
+    button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.list.copy-perks-button" });
+
+	buttonLayout = $('<div class="l-button"/>');
+	buttonContainer.append(buttonLayout);
+	
+	button = buttonLayout.createTextButton("delete", function ()
+    {
+		var callback = function (data)
+	    {
+	    	self.mDataSource.notifyBackendLoadSavedPerks()
+	    }
+	    console.error("Called delete function. Name of build : " + _data)
+        self.mDataSource.notifyBackendDeletePerks(_data, callback);
+    }, '', 1)
+    button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.list.delete-perks-button" });
+
+    var totalResult = {
+    	div: result,
+    	numOfMatchingPerks : numPerks
+    }
+	return totalResult
+
+};
+
 CharacterScreenPerksModule.prototype.destroyDIV = function ()
 {
 	this.mPerkPlanningPanel = null;
@@ -343,11 +485,11 @@ CharacterScreenPerksModule.prototype.attachEventHandler = function(_perk)
         	}
         	else{
         		_perk.Selected = false;
+        		selectionLayer.attr('src', Path.GFX + Asset.PERK_SELECTION_FRAME);
         		if(!_perk.Unlocked){
-        			selectionLayer.attr('src', Path.GFX + Asset.PERK_SELECTION_FRAME);
         			selectionLayer.removeClass('display-block').addClass('display-none');
-        			self.mDataSource.notifyBackendUpdateSelectedPerk(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], _perk.ID, 0, callback)
         		}
+        		self.mDataSource.notifyBackendUpdateSelectedPerk(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], _perk.ID, 0, callback)
         	}
         	
         }
@@ -365,6 +507,7 @@ CharacterScreenPerksModule.prototype.attachEventHandler = function(_perk)
 
 CharacterScreenPerksModule.prototype.initPerkTree = function (_perkTree, _perksUnlocked, _selectedPerks)
 {
+	this.mPerksToImageDict = {}
 	var perkPointsSpent = this.mDataSource.getBrotherPerkPointsSpent(this.mDataSource.getSelectedBrother());
 	var idx = 0;
 	for (var row = 0; row < _perkTree.length; ++row)
@@ -373,11 +516,15 @@ CharacterScreenPerksModule.prototype.initPerkTree = function (_perkTree, _perksU
 		{
 
 			var perk = _perkTree[row][i];
+			this.mPerksToImageDict[perk.ID] = {
+				unlocked : perk.Icon,
+				locked : perk.IconDisabled
+			}
 
 			for (var j = 0; j < _perksUnlocked.length; ++j)
 			{
 				if(_perksUnlocked[j] == perk.ID)
-				{
+				{1
 					perk.Unlocked = true;
 
 					perk.Image.attr('src', Path.GFX + perk.Icon);
@@ -389,7 +536,7 @@ CharacterScreenPerksModule.prototype.initPerkTree = function (_perkTree, _perksU
 				}
 			}
 
-			if (perk.ID in _selectedPerks && !perk.Unlocked){
+			if (perk.ID in _selectedPerks){
 				perk.Selected = true;
 				var selectionLayer = perk.Container.find('.selection-image-layer:first');
 				selectionLayer.attr('src', Path.GFX + 'ui/perks/selection_frame_planning.png');
@@ -448,25 +595,51 @@ CharacterScreenDatasource.prototype.notifyBackendClearPerksButtonClicked = funct
 
 }
 
-CharacterScreenDatasource.prototype.notifyBackendSaveCurrentPerks = function(_brother, _perkName)
+CharacterScreenDatasource.prototype.notifyBackendSaveCurrentPerks = function(_brother, _perkName, _callback)
 {
 
-	SQ.call(this.mSQHandle, 'onSaveSelectedPerks', [_brother, _perkName]);
+	SQ.call(this.mSQHandle, 'onSaveSelectedPerks', [_brother, _perkName], _callback);
 }
+
+//load all saved builds with a callback to update the scroll container
 CharacterScreenDatasource.prototype.notifyBackendLoadSavedPerks = function()
 {
-
-	var result = SQ.call(this.mSQHandle, 'onLoadAllSelectedPerks', []);
-	return result
+	var self = this;
+	var callback = function(_data){
+		self.loadAllPerkBuilds(_data)
+	}
+	SQ.call(this.mSQHandle, 'onLoadAllSelectedPerks', [], callback);
 }
-CharacterScreenDatasource.prototype.notifyBackendLoadPerks = function(_brother, _perks, _callback)
+CharacterScreenDatasource.prototype.loadAllPerkBuilds = function(_data)
+{	
+	this.mSavedPerkBuilds = _data["perks"]
+	this.notifyEventListener('perks.saved-list-loaded', _data["perks"]);
+}
+
+CharacterScreenDatasource.prototype.notifyBackendLoadPerksFromName = function(_brother, _perkBuildID, _callback)
 {
 
-	SQ.call(this.mSQHandle, 'onLoadSelectedPerks', [_brother, _perks], _callback);
+	SQ.call(this.mSQHandle, 'onLoadSelectedPerksFromName', [_brother, _perkBuildID], _callback);
 }
 
 CharacterScreenDatasource.prototype.notifyBackendLoadPerksFromCode = function(_brother, _code, _callback)
 {
 
-	SQ.call(this.mSQHandle, 'onLoadSelectedPerksFromCode', [_brother, _perks], _callback);
+	SQ.call(this.mSQHandle, 'onLoadSelectedPerksFromCode', [_brother, _code], _callback);
+}
+
+
+CharacterScreenDatasource.prototype.notifyBackendCopyPerksFromName = function(_perkBuildID, _callback)
+{
+	SQ.call(this.mSQHandle, 'onCopyPerksFromName', [_perkBuildID], _callback);
+}
+CharacterScreenDatasource.prototype.notifyBackendCopyCurrentPerks = function(_brother, _callback)
+{
+
+	SQ.call(this.mSQHandle, 'onCopyCurrentPerks', [_brother], _callback);
+}
+CharacterScreenDatasource.prototype.notifyBackendDeletePerks = function(_perkBuildID, _callback)
+{
+
+	SQ.call(this.mSQHandle, 'onDeletePerks', [_perkBuildID], _callback);
 }

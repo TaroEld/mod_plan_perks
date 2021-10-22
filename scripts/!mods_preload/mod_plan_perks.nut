@@ -17,6 +17,8 @@ local modName = "mod_plan_perks"
 
 		o.addSelectedPerksToUIData <- function(_entity){
 			local selectedPerksDict = {}
+			//weird error
+			if (!("getBackground" in _entity) || _entity.getBackground() == null) return selectedPerksDict
 			foreach(key in _entity.getBackground().m.SelectedPerks){
 				selectedPerksDict[key] <- 1
 			}
@@ -34,6 +36,7 @@ local modName = "mod_plan_perks"
 		}
 		local onSerialize = o.onSerialize	
 		o.onSerialize = function(_out){
+			this.World.Flags.set("Perk_Manager", true)
 			onSerialize(_out)
 			this.World.Perks.onSerialize(_out)
 		}
@@ -42,7 +45,9 @@ local modName = "mod_plan_perks"
 		local onDeserialize = o.onDeserialize
 		o.onDeserialize = function(_in){
 			onDeserialize(_in)
-			this.World.Perks.onDeserialize(_in)
+			if (this.World.Flags.has("Perk_Manager")){
+				this.World.Perks.onDeserialize(_in)
+			}
 		}
 
 	})
@@ -54,8 +59,6 @@ local modName = "mod_plan_perks"
 			this.getContainer().getActor().getFlags().set("selectedPerks", true)
 		}
 		o.getSelectedPerks <- function(){
-			this.logInfo("getSelectedPerks")
-			::printData(this.m.SelectedPerks)
 			return this.m.SelectedPerks
 		}
 
@@ -74,12 +77,14 @@ local modName = "mod_plan_perks"
 				}
 			}
 		}
-		o.setSelectedPerks <- function(_perks){
-			this.m.SelectedPerks = _perks
+		o.setSelectedPerks <- function(_perks, _override = true){
+			if (_override) this.m.SelectedPerks = _perks
+			else this.addToSelectedPerks(_perks)
+			
 		}
 		o.addToSelectedPerks <- function(_perks){
-			foreach (perkID in perks){
-				this.m.updateSelectedPerk(perkID, 1)
+			foreach (perkID in _perks){
+				this.updateSelectedPerk(perkID, 1)
 			}
 		}
 	})
@@ -111,6 +116,7 @@ local modName = "mod_plan_perks"
 		}
 	})
 	::mods_hookNewObject("ui/screens/character/character_screen", function(o){
+		//see the JS file for documentation about their function
 		
 		o.onUpdateSelectedPerk <- function(_data){
 			//_data = _entity, _perk, _bool
@@ -130,42 +136,60 @@ local modName = "mod_plan_perks"
 			this.World.Perks.addPerkBuild(_data[1], brother.getBackground().getSelectedPerks())
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
-		o.onLoadAllSelectedPerks <- function(_data){
-			this.logInfo("in onLoadAllSelectedPerks")
-			local result = {perks = this.World.Perks.getAllPerkBuilds()}
-			::printData(result)
-			return result
+		o.onLoadAllPerkBuilds <- function(_data){
+			//data = null
+			return {perks = this.World.Perks.getAllPerkBuilds()}
 		}
-		o.onLoadSelectedPerksFromName <- function(_data){
+		o.onApplyPerkBuildFromName <- function(_data){
+			//data = brotherID, perkBuildID, overrideBool
 			local brother = this.Tactical.getEntityByID(_data[0])
-			brother.getBackground().setSelectedPerks(this.World.Perks.loadPerkBuild(_data[1]))
+			brother.getBackground().setSelectedPerks(this.World.Perks.getPerkBuildCode(_data[1]), _data[2])
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
-		o.onLoadSelectedPerksFromCode <-function(_data){
+		o.onApplyPerkBuildFromCode <-function(_data){
 			//data = brotherID, perkBuildID
-			this.logInfo("onLoadSelectedPerksFromCode, code: " + _data[1])
 			local brother = this.Tactical.getEntityByID(_data[0])
-			local parsedData = this.World.Perks.importSinglePerkBuild(_data[1])
-			brother.getBackground().setSelectedPerks(parsedData)
+			local perkIDArray = this.World.Perks.stripNameFromCode(_data[1])
+			brother.getBackground().setSelectedPerks(perkIDArray, _data[2])
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
-		o.onCopyCurrentPerks <- function(_data){
+		o.onImportPerkBuildsFromCode <-function(_data){
+			//data = code containing string to parse with name and perk array
+			this.World.Perks.importPerkBuilds(_data[0])
+		}
+
+		o.onExportCurrentPerks <- function(_data){
 			//data = brotherID
 			local brother = this.Tactical.getEntityByID(_data[0])
-			local parsedData = this.World.Perks.exportSinglePerkBuild(brother.getBackground().getSelectedPerks())
-			this.logInfo("parsedData" + parsedData)
-			local result = {code = parsedData}
-			return result
+			local dataAsDict = {placeholderName = brother.getBackground().getSelectedPerks()}
+			local parsedCode = this.World.Perks.exportPerkBuilds(dataAsDict)
+			return { parsedCode = parsedCode }
+
 		}
-		o.onCopyPerksFromName <- function(_data){
+		o.onExportSinglePerkBuildFromName <- function(_data){
 			//_data = perkBuildID
-			local parsedData = this.World.Perks.exportSinglePerkBuild(this.World.Perks.loadPerkBuild(_data[0]))
-			local result = {code = parsedData}
-			return result
+			local dataAsDict = this.World.Perks.getPerkBuildAsDict(_data[0])
+			local parsedCode = this.World.Perks.exportPerkBuilds(dataAsDict)
+			return  {parsedCode = parsedCode}
 		}
-		o.onDeletePerks <- function(_data){
+		o.onExportAllPerkBuilds <- function(_data){
+			//data = null
+			local parsedCode = this.World.Perks.exportPerkBuilds(this.World.Perks.getAllPerkBuilds())
+			return { parsedCode = parsedCode }
+		}
+		o.onDeletePerkBuild <- function(_data){
 			//data = perkBuildID
 			this.World.Perks.removePerkBuild(_data[0])
+		}
+		o.onQueryLegends <- function(_data){
+			//data = null
+			local hasLegends = ("LegendsMod" in this.getroottable())
+			if (hasLegends){
+				return [true, this.Const.Perks.PerkDefObjects]
+			}
+			else{
+				return [false]
+			}
 		}
 	})
 
@@ -188,7 +212,7 @@ local modName = "mod_plan_perks"
 						{
 							id = 1,
 							type = "title",
-							text = "Open perks menu"
+							text = "Open perk build menu"
 						},
 						{
 							id = 2,
@@ -202,12 +226,12 @@ local modName = "mod_plan_perks"
 						{
 							id = 1,
 							type = "title",
-							text = "Reset perks"
+							text = "Reset planned perks"
 						},
 						{
 							id = 2,
 							type = "description",
-							text = "Clear all selected perks for this brother."
+							text = "Clear all planned perks for this character."
 						}
 					];
 				case "mod-plan-perks.menu.save-perks-button":
@@ -215,12 +239,12 @@ local modName = "mod_plan_perks"
 						{
 							id = 1,
 							type = "title",
-							text = "Save current perks"
+							text = "Save planned perks"
 						},
 						{
 							id = 2,
 							type = "description",
-							text = "Save the currently selected perks of this brother under a new build."
+							text = "Save the planned perks of this character as a new build. Does not include unlocked perks that are not 'planned'. \n[color=" + this.Const.UI.Color.NegativeValue + "]Note: to unlock this button, you must enter a name, select at least one perk, and can't use the characters '°' or '~'.[/color]"
 						}
 					];
 
@@ -229,12 +253,25 @@ local modName = "mod_plan_perks"
 						{
 							id = 1,
 							type = "title",
-							text = "Copy current perks"
+							text = "Copy planned perks"
 						},
 						{
 							id = 2,
 							type = "description",
-							text = "Copy the currently selected perks of this brother to your clipboard."
+							text = "Copy the planned perks of this character to your clipboard."
+						}
+					];
+				case "mod-plan-perks.menu.copy-all-perks-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Export all perk builds"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Export all your saved builds, including name, to your clipboard. This results in a code that can later be imported."
 						}
 					];
 				case "mod-plan-perks.menu.paste-perks-button":
@@ -242,12 +279,12 @@ local modName = "mod_plan_perks"
 						{
 							id = 1,
 							type = "title",
-							text = "Copy current perks"
+							text = "Paste clipboard"
 						},
 						{
 							id = 2,
 							type = "description",
-							text = "Paste contents of your clipboard to the input field."
+							text = "Paste contents of your clipboard to the input field to the left. Use 'Apply Build' to apply the planned perks to this character, or 'Import Build(s)' to save the build."
 						}
 					];
 				case "mod-plan-perks.menu.load-single-build-button":
@@ -255,12 +292,12 @@ local modName = "mod_plan_perks"
 						{
 							id = 1,
 							type = "title",
-							text = "Load perk build"
+							text = "Apply Build"
 						},
 						{
 							id = 2,
 							type = "description",
-							text = "Load a perk build onto the current brother based on the code in the input field."
+							text = "Apply a perk build from the input field on the left to this character."
 						}
 					];
 				case "mod-plan-perks.menu.load-all-builds-button":
@@ -268,12 +305,12 @@ local modName = "mod_plan_perks"
 						{
 							id = 1,
 							type = "title",
-							text = "Load all perk builds"
+							text = "Import Build(s)"
 						},
 						{
 							id = 2,
 							type = "description",
-							text = "Create many perk builds and save them based on the code in the input field."
+							text = "Import any number of builds and save them in the list below, based on the code in the input field to the left."
 						}
 					];
 				case "mod-plan-perks.menu.list.load-perks-button":
@@ -281,12 +318,12 @@ local modName = "mod_plan_perks"
 						{
 							id = 1,
 							type = "title",
-							text = "Load perk build"
+							text = "Apply Perk Build"
 						},
 						{
 							id = 2,
 							type = "description",
-							text = "Load the perk build onto the current brother."
+							text = "Apply this perk build to this character."
 						}
 					];
 				case "mod-plan-perks.menu.list.copy-perks-button":
@@ -294,26 +331,27 @@ local modName = "mod_plan_perks"
 						{
 							id = 1,
 							type = "title",
-							text = "Copy perk build"
+							text = "Export Perk Build"
 						},
 						{
 							id = 2,
 							type = "description",
-							text = "Copy the code of the perk build."
+							text = "Export this perk build to the clipboard. The resulting code can later be imported."
 						}
 					];
+
 
 				case "mod-plan-perks.menu.list.delete-perks-button":
 					return [
 						{
 							id = 1,
 							type = "title",
-							text = "Delete perk build"
+							text = "Delete Perk Build"
 						},
 						{
 							id = 2,
 							type = "description",
-							text = "Delete the perk build."
+							text = "Delete this perk build."
 						}
 					];
 				case "mod-plan-perks.menu.override-perks-toggle":
@@ -326,7 +364,7 @@ local modName = "mod_plan_perks"
 						{
 							id = 2,
 							type = "description",
-							text = "If this is selected, selected perks will be overriden if you load a new build. Otherwise, the perks will be added to the already selected perks."
+							text = "If this is selected, planned perks will be overridden if you load a new build. Otherwise, the perks will be added to the already planned perks."
 						}
 					];
 				case "mod-plan-perks.menu.perk-build-name-input":
@@ -334,12 +372,51 @@ local modName = "mod_plan_perks"
 						{
 							id = 1,
 							type = "title",
-							text = "Perk build name"
+							text = "Perk Build Name"
 						},
 						{
 							id = 2,
 							type = "description",
 							text = "Enter the name of a new build that you wish to save."
+						}
+					];
+				case "mod-plan-perks.menu.sort-alphabetically-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Sort builds alphabetically"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Sort the build list alphabetically. Click again to reverse the order."
+						}
+					];
+				case "mod-plan-perks.menu.sort-by-missing-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Sort builds by missing perks"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "[LEGENDS ONLY] Sort the build list by number of missing perks in the current character's perk tree. Click again to reverse the order."
+						}
+					];
+				case "mod-plan-perks.menu.sort-by-matching-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Sort builds by unlocked perks"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Sort the build list by number of unlocked perks. Click again to reverse the order."
 						}
 					];
 				case "mod-plan-perks.menu.perk-code-input":
@@ -352,9 +429,14 @@ local modName = "mod_plan_perks"
 						{
 							id = 2,
 							type = "description",
-							text = "Enter perk build code, either of a single build or of many builds."
+							text = "Use 'Paste Clipboard' to enter perk build code(s), either of a single build or of many builds that were previously exported."
 						}
 					];
+
+
+
+				
+				
 			}
 			return general_queryUIElementTooltipData( _entityId, _elementId, _elementOwner )
 		}

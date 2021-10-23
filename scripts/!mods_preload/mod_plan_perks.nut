@@ -432,10 +432,32 @@ local modName = "mod_plan_perks"
 							text = "Use 'Paste Clipboard' to enter perk build code(s), either of a single build or of many builds that were previously exported."
 						}
 					];
-
-
-
-				
+				case "mod-plan-perks.switch-previous-brother-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Switch to the previous brother"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Switch to the previous brother in your roster."
+						}
+					];
+				case "mod-plan-perks.switch-next-brother-button":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Switch to the next brother"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Switch to the next brother in your roster."
+						}
+					];			
 				
 			}
 			return general_queryUIElementTooltipData( _entityId, _elementId, _elementOwner )

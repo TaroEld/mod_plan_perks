@@ -19,10 +19,14 @@
 }
 
 .perk-portrait-container{
-    position: relative;
-    float: right;
+    position: absolute;
     right:  15rem;
+    top: -5rem;
+    width: 30rem;
+    height: 30rem;
 }
+
+
 
 
 .save-and-load-perks-popup
@@ -135,10 +139,33 @@
     height:  4.0rem;
     line-height: 3.0rem;
 }
+.sort-bar-container
+{
+    width: 100%;
+    height: 4.0rem;
+    position: relative;
+    margin-top: 2.0rem;
+}
+.sort-bar-button-container
+{
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+.sort-bar-button-container  .l-button
+{
+
+    width: 17.5rem;
+    position: relative;
+    float: left;
+    height:  4.0rem;
+    line-height: 3.0rem;
+}
 
 .far-right
 {
-    left:  50%;
+    left:  40%;
 }
 
 .load-perks-from-code-container .l-input .ui-control
@@ -151,12 +178,29 @@
     float: left;
     line-height: 3.0rem;
 }
+
+.switch-brother-button-container{
+    width: 15rem;
+    height: 5rem;
+    position: relative;
+    float: left;
+}
+
+.switch-brother-button-container .l-button
+{
+    width: 5.2rem;
+    height: 4.1rem;
+    position: relative;
+    float: left;
+}
+
 .load-perks-from-code-container .control
 {
     float: left;
     position: relative;
     margin-left  : 5.0rem;
     margin-bottom: 2.0rem;
+    width: 25rem;
 }
 
 .load-perks-from-code-container .control label

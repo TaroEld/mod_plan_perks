@@ -40,6 +40,26 @@ CharacterScreenPerksModule.prototype.hide = function ()
     }
 };
 
+CharacterScreenPerksModule.prototype.updateDynamicContent = function (_dataSource, _brother)
+{
+	var self = this;
+	if (this.mPopupDialog === undefined || this.mPopupDialog === null) return
+	this.mListScrollContainer.empty()
+	this.mDataSource.notifyBackendLoadSavedPerks()
+	
+	this.mPortraitContainer.empty()
+
+	var nameContainer = $('.name-container').clone()
+	nameContainer.css("height", "7rem")
+	this.mPortraitContainer.append(nameContainer)
+	
+	setTimeout(function(){
+		self.mPortraitImage = $('.portrait-container').find("img").eq(1).clone()
+		self.mPortraitContainer.append(self.mPortraitImage)
+	}, 50)
+
+}
+
 CharacterScreenPerksModule.prototype.createPerkDiv = function (_parentDiv)
 {
 
@@ -48,6 +68,7 @@ CharacterScreenPerksModule.prototype.createPerkDiv = function (_parentDiv)
 	if(!("perks.saved-list-loaded" in this.mDataSource.mEventListener)){
 		this.mDataSource.mEventListener['perks.saved-list-loaded'] = [ ];
 		this.mDataSource.addListener('perks.saved-list-loaded', jQuery.proxy(this.setupPerkList, this));
+		this.mDataSource.addListener(CharacterScreenDatasourceIdentifier.Brother.Selected, jQuery.proxy(this.updateDynamicContent, this));
 	}
 
 	var self = this;
@@ -152,20 +173,13 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
 	var savePerksFromCodeContainer = $('<div class="save-perks-from-code-container"/>');
 	savePerksContainer.append(savePerksFromCodeContainer)
 	var nameContainer = $('.name-container').clone()
+	nameContainer.css("height", "7rem")
 
-	var mPortraitContainer =  $('<div class="perk-portrait-container"/>');
-	savePerksFromCodeContainer.append(mPortraitContainer)
-	var portrait = $('.portrait-container').find("img").eq(1).clone()
-	mPortraitContainer.append(nameContainer)
-	mPortraitContainer.append(portrait)
-
-	// //var charImg = mPortraitContainer.children("img").children().eq(1).clone()
-	// console.error("IMG==== " + charImg)
+	this.mPortraitContainer =  $('<div class="perk-portrait-container"/>');
+	savePerksFromCodeContainer.append(this.mPortraitContainer)
+	this.mPortraitImage = $('.portrait-container').find("img").eq(1).clone()
+	this.mPortraitContainer.append(nameContainer)
 	
-	// mPortraitContainer.empty()
-	// mPortraitContainer.append(charImg)
-	// mPortraitContainer.removeClass('opacity-almost-none');
-	// //mPortraitContainer.addClass('position-top-right');
 
 
 	var header = $('<div class="header has-no-sub-title"/>');
@@ -328,13 +342,13 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.load-all-builds-button" });
 
 	//toggle override
-	var toggleContainer = $('<div class="control"/>');
-	loadPerksFromCodeContainer.append(toggleContainer);
+	var toggleOverrideContainer = $('<div class="control"/>');
+	loadPerksFromCodeContainer.append(toggleOverrideContainer);
 	var overrideToggle = $('<input type="checkbox" id="override-toggle"/>');
-	toggleContainer.append(overrideToggle);
+	toggleOverrideContainer.append(overrideToggle);
 	this.mOverrideToggle = overrideToggle
 	var overrideLabel = $('<label class="text-font-normal font-color-subtitle" for="override-toggle">Override planned perks</label>');
-	toggleContainer.append(overrideLabel);
+	toggleOverrideContainer.append(overrideLabel);
 	overrideToggle.iCheck(
 	{
 	    checkboxClass: 'icheckbox_flat-orange',
@@ -342,15 +356,16 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
 	    increaseArea: '30%'
 	}, '', 1)
 	overrideToggle.iCheck('check')
-	toggleContainer.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.override-perks-toggle" });
-	
-	
+	toggleOverrideContainer.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.override-perks-toggle" });
 
-	var filterBarContainer = $('<div class="load-perks-from-code-container"/>');
+
+	var filterBarContainer = $('<div class="sort-bar-container"/>');
 	loadPerksContainer.append(filterBarContainer)
+	var filterBarButtonsContainer = $('<div class="sort-bar-button-container"/>');
+	filterBarContainer.append(filterBarButtonsContainer)
 
 	buttonLayout = $('<div class="l-button"/>');
-	filterBarContainer.append(buttonLayout);
+	filterBarButtonsContainer.append(buttonLayout);
 	button = buttonLayout.createTextButton("Sort By Missing Perks", function ()
     {
     	if (self.mSortingFunction == "byMissingPerks") self.mSortingFunction = "byMissingPerksReverse"
@@ -360,7 +375,7 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.sort-by-missing-button" });
 
 	buttonLayout = $('<div class="l-button"/>');
-	filterBarContainer.append(buttonLayout);
+	filterBarButtonsContainer.append(buttonLayout);
 	button = buttonLayout.createTextButton("Sort Alphabetically", function ()
     {
     	if (self.mSortingFunction == "byAlphabetical") self.mSortingFunction = "byAlphabeticalReverse"
@@ -370,7 +385,7 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.sort-alphabetically-button" });
 
 	buttonLayout = $('<div class="l-button"/>');
-	filterBarContainer.append(buttonLayout);
+	filterBarButtonsContainer.append(buttonLayout);
 	button = buttonLayout.createTextButton("Sort by Unlocked Perks", function ()
     {
     	if (self.mSortingFunction == "byMatchingPerks") self.mSortingFunction = "byMatchingPerksReverse"
@@ -379,8 +394,32 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     }, '', 1)
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.sort-by-matching-button" });
 
+
+	this.mSwitchBrotherContainer = $('<div class="switch-brother-button-container far-right"/>');
+	filterBarButtonsContainer.append(this.mSwitchBrotherContainer)
+	this.mPortraitContainer.append(this.mPortraitImage)
+
+	buttonLayout = $('<div class="l-button"/>');
+	this.mSwitchBrotherContainer.append(buttonLayout);
+	button = buttonLayout.createImageButton(Path.GFX + "ui/buttons/switch_previous_brother.png", function ()
+    {
+    	console.error("called switch_previous_brother")
+    	self.mDataSource.modPerkSwitchPreviousBrother();
+    }, "", 3);
+    button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.switch-previous-brother-button" });
+
+	buttonLayout = $('<div class="l-button"/>');
+	this.mSwitchBrotherContainer.append(buttonLayout);
+	button = buttonLayout.createImageButton(Path.GFX + "ui/buttons/switch_next_brother.png", function ()
+    {
+    	console.error("called switch_next_brother")
+    	self.mDataSource.modPerkSwitchNextBrother();
+    }, "", 3);
+    button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.switch-next-brother-button" });
+
+
     buttonLayout = $('<div class="l-button far-right"/>');
-    filterBarContainer.append(buttonLayout)
+    filterBarButtonsContainer.append(buttonLayout)
 	button = buttonLayout.createTextButton("Export All Builds", function ()
     {
 	    
@@ -896,3 +935,75 @@ CharacterScreenDatasource.prototype.notifyBackendDeletePerkBuild = function(_per
 
 	SQ.call(this.mSQHandle, 'onDeletePerkBuild', [_perkBuildID], _callback);
 }
+
+
+
+CharacterScreenDatasource.prototype.modPerkSwitchPreviousBrother = function(_withoutNotify)
+{
+    if (this.mBrothersList == null)
+        return;
+
+    var currentIndex = this.mSelectedBrotherIndex;
+
+    for (var i = this.mSelectedBrotherIndex - 1; i >= 0; --i)
+    {
+        if (this.mBrothersList[i] !== null)
+        {
+            this.mSelectedBrotherIndex = i;
+            break;
+        }
+    }
+
+    if (this.mSelectedBrotherIndex == currentIndex)
+    {
+        for (var i = this.mBrothersList.length - 1; i > currentIndex; --i)
+        {
+            if (this.mBrothersList[i] !== null)
+            {
+                this.mSelectedBrotherIndex = i;
+                break;
+            }
+        }
+    }
+
+    // notify every listener
+    if (_withoutNotify === undefined || _withoutNotify !== true)
+    {
+        this.notifyEventListener(CharacterScreenDatasourceIdentifier.Brother.Selected, this.getSelectedBrother());
+    }
+};
+
+CharacterScreenDatasource.prototype.modPerkSwitchNextBrother = function(_withoutNotify)
+{
+    if (this.mBrothersList == null)
+        return;
+
+    var currentIndex = this.mSelectedBrotherIndex;
+
+    for (var i = this.mSelectedBrotherIndex + 1; i < this.mBrothersList.length; ++i)
+    {
+        if (this.mBrothersList[i] !== null)
+        {
+            this.mSelectedBrotherIndex = i;
+            break;
+        }
+    }
+
+    if(this.mSelectedBrotherIndex == currentIndex)
+    {  
+        for (var i = 0; i < this.mSelectedBrotherIndex; ++i)
+        {
+            if (this.mBrothersList[i] !== null)
+            {
+                this.mSelectedBrotherIndex = i;
+                break;
+            }
+        }
+    }
+
+    // notify every listener
+	if (_withoutNotify === undefined || _withoutNotify !== true)
+	{
+		this.notifyEventListener(CharacterScreenDatasourceIdentifier.Brother.Selected, this.getSelectedBrother());
+	}
+};

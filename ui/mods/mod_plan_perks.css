@@ -1,59 +1,28 @@
-.character-screen-container .perks-module
+
+.mod-plan-perks-button-panel
 {
-    top: 3.5rem;
-    left: 1.0rem;
-    right: 1.5rem;
-    bottom: 4.0rem;
-    height: 49.0rem;
-    position: absolute;
-
-
-}
-
-
-
-.character-screen-container .perks-module .slot-count-panel
-{
-    left: 1.0rem;
-    right: 0;
-    top: 45.5rem;
-    height: 3.4rem;
-    width: 100%;
-    position: absolute;
-
-    z-index: 999;
-}
-
-/*
-.character-screen-container .perks-module .filter-panel
-{
-    position: absolute;
-    left: 2.0rem;
-    z-index: 999;
-    padding-bottom: 1.0rem;
-    margin-bottom: 1.0rem;
-    bottom: 1.0rem;
-}
-*/
-.character-screen-container .perks-module .filter-panel .l-button
-{
-    width: 5.2rem;
+    left: 0.1rem;
+    top:  0.5rem;
     height: 4.1rem;
     position: absolute;
 
+    z-index: 999;
 }
 
-.character-screen-container .perks-module .filter-panel .l-button.is-sort
+.mod-plan-perks-button-panel .l-button
 {
-    
+    width: 4.2rem;
+    height: 3.3rem;
+    position: relative;
+    float: left;
+
 }
 
-.character-screen-container .perks-module .filter-panel .l-button.is-all-filter
-{
-    left: 5.0rem;
+.perk-portrait-container{
+    position: relative;
+    float: right;
+    right:  15rem;
 }
-
-
 
 
 .save-and-load-perks-popup
@@ -166,10 +135,12 @@
     height:  4.0rem;
     line-height: 3.0rem;
 }
+
 .far-right
 {
     left:  50%;
 }
+
 .load-perks-from-code-container .l-input .ui-control
 {
 
@@ -329,5 +300,3 @@
     vertical-align: middle;
 }
 
-.put-border-top{
-}

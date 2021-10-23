@@ -1,5 +1,5 @@
 local modName = "mod_plan_perks"
-::mods_registerMod(modName, 1.0)
+::mods_registerMod(modName, 2.0)
 ::mods_registerJS("mod_plan_perks.js");
 ::mods_registerCSS("mod_plan_perks.css");
 ::mods_queue(null, null, function()
@@ -11,18 +11,18 @@ local modName = "mod_plan_perks"
 		local convertEntityToUIData = o.convertEntityToUIData
 		o.convertEntityToUIData = function(_entity, _activeEntity){
 			local result = convertEntityToUIData(_entity, _activeEntity)
-			result.selectedPerks <- this.addSelectedPerksToUIData(_entity)
+			result.PlannedPerks <- this.addPlannedPerksToUIData(_entity)
 			return result
 		}
 
-		o.addSelectedPerksToUIData <- function(_entity){
-			local selectedPerksDict = {}
+		o.addPlannedPerksToUIData <- function(_entity){
+			local PlannedPerksDict = {}
 			//weird error
-			if (!("getBackground" in _entity) || _entity.getBackground() == null) return selectedPerksDict
-			foreach(key in _entity.getBackground().m.SelectedPerks){
-				selectedPerksDict[key] <- 1
+			if (!("getBackground" in _entity) || _entity.getBackground() == null) return PlannedPerksDict
+			foreach(key in _entity.getBackground().m.PlannedPerks){
+				PlannedPerksDict[key] <- 1
 			}
-			return selectedPerksDict
+			return PlannedPerksDict
 		}
 	})
 
@@ -53,38 +53,38 @@ local modName = "mod_plan_perks"
 	})
 
 	::mods_hookExactClass("skills/backgrounds/character_background", function(o){
-		o.m.SelectedPerks <- []
-		o.initSelectedPerks <- function(){
-			this.m.SelectedPerks = []
-			this.getContainer().getActor().getFlags().set("selectedPerks", true)
+		o.m.PlannedPerks <- []
+		o.initPlannedPerks <- function(){
+			this.m.PlannedPerks = []
+			this.getContainer().getActor().getFlags().set("PlannedPerks", true)
 		}
-		o.getSelectedPerks <- function(){
-			return this.m.SelectedPerks
+		o.getPlannedPerks <- function(){
+			return this.m.PlannedPerks
 		}
 
-		o.updateSelectedPerk <- function(_perkID, _val){
-			if (!this.getContainer().getActor().getFlags().get("selectedPerks")){
-				this.initSelectedPerks()
+		o.updatePlannedPerk <- function(_perkID, _val){
+			if (!this.getContainer().getActor().getFlags().get("PlannedPerks")){
+				this.initPlannedPerks()
 			}
 			if (_val == 1){
-				if (this.m.SelectedPerks.find(_perkID) == null){
-					this.m.SelectedPerks.push(_perkID)
+				if (this.m.PlannedPerks.find(_perkID) == null){
+					this.m.PlannedPerks.push(_perkID)
 				}
 			}
 			else{
-				if (this.m.SelectedPerks.find(_perkID) != null){
-					this.m.SelectedPerks.remove(this.m.SelectedPerks.find(_perkID))
+				if (this.m.PlannedPerks.find(_perkID) != null){
+					this.m.PlannedPerks.remove(this.m.PlannedPerks.find(_perkID))
 				}
 			}
 		}
-		o.setSelectedPerks <- function(_perks, _override = true){
-			if (_override) this.m.SelectedPerks = _perks
-			else this.addToSelectedPerks(_perks)
+		o.setPlannedPerks <- function(_perks, _override = true){
+			if (_override) this.m.PlannedPerks = _perks
+			else this.addToPlannedPerks(_perks)
 			
 		}
-		o.addToSelectedPerks <- function(_perks){
+		o.addToPlannedPerks <- function(_perks){
 			foreach (perkID in _perks){
-				this.updateSelectedPerk(perkID, 1)
+				this.updatePlannedPerk(perkID, 1)
 			}
 		}
 	})
@@ -92,11 +92,11 @@ local modName = "mod_plan_perks"
 		local onSerialize = o.onSerialize	
 		o.onSerialize = function(_out){
 			onSerialize(_out)
-			if(this.getFlags().get("selectedPerks")){
-				local selectedPerks = this.getBackground().m.SelectedPerks
-				local len = selectedPerks.len()
+			if(this.getFlags().get("PlannedPerks")){
+				local PlannedPerks = this.getBackground().m.PlannedPerks
+				local len = PlannedPerks.len()
 				_out.writeU8(len);
-				foreach(perkID in selectedPerks){
+				foreach(perkID in PlannedPerks){
 					_out.writeString(perkID)
 				}
 			}
@@ -106,11 +106,11 @@ local modName = "mod_plan_perks"
 		o.onDeserialize = function(_in){
 			onDeserialize(_in)
 			local background = this.getBackground()
-			background.m.SelectedPerks <- []
-			if(this.getFlags().get("selectedPerks")){
+			background.m.PlannedPerks <- []
+			if(this.getFlags().get("PlannedPerks")){
 				local len = _in.readU8()
 				for (local x = 0; x < len; x++){
-					background.m.SelectedPerks.push(_in.readString())
+					background.m.PlannedPerks.push(_in.readString())
 				}
 			}
 		}
@@ -118,22 +118,22 @@ local modName = "mod_plan_perks"
 	::mods_hookNewObject("ui/screens/character/character_screen", function(o){
 		//see the JS file for documentation about their function
 		
-		o.onUpdateSelectedPerk <- function(_data){
+		o.onUpdatePlannedPerk <- function(_data){
 			//_data = _entity, _perk, _bool
 			local brother = this.Tactical.getEntityByID(_data[0])
-			brother.getBackground().updateSelectedPerk(_data[1], _data[2]);
+			brother.getBackground().updatePlannedPerk(_data[1], _data[2]);
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
-		o.onClearSelectedPerks <- function(_data){
+		o.onClearPlannedPerks <- function(_data){
 			//_data = _entity, _perk, _bool
 			local brother = this.Tactical.getEntityByID(_data[0])
-			brother.getBackground().initSelectedPerks();
+			brother.getBackground().initPlannedPerks();
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
-		o.onSaveSelectedPerks <- function(_data){
+		o.onSavePlannedPerks <- function(_data){
 			//_data = _entity, _perk, _bool
 			local brother = this.Tactical.getEntityByID(_data[0])
-			this.World.Perks.addPerkBuild(_data[1], brother.getBackground().getSelectedPerks())
+			this.World.Perks.addPerkBuild(_data[1], brother.getBackground().getPlannedPerks())
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
 		o.onLoadAllPerkBuilds <- function(_data){
@@ -143,14 +143,14 @@ local modName = "mod_plan_perks"
 		o.onApplyPerkBuildFromName <- function(_data){
 			//data = brotherID, perkBuildID, overrideBool
 			local brother = this.Tactical.getEntityByID(_data[0])
-			brother.getBackground().setSelectedPerks(this.World.Perks.getPerkBuildCode(_data[1]), _data[2])
+			brother.getBackground().setPlannedPerks(this.World.Perks.getPerkBuildCode(_data[1]), _data[2])
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
 		o.onApplyPerkBuildFromCode <-function(_data){
 			//data = brotherID, perkBuildID
 			local brother = this.Tactical.getEntityByID(_data[0])
 			local perkIDArray = this.World.Perks.stripNameFromCode(_data[1])
-			brother.getBackground().setSelectedPerks(perkIDArray, _data[2])
+			brother.getBackground().setPlannedPerks(perkIDArray, _data[2])
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
 		o.onImportPerkBuildsFromCode <-function(_data){
@@ -161,7 +161,7 @@ local modName = "mod_plan_perks"
 		o.onExportCurrentPerks <- function(_data){
 			//data = brotherID
 			local brother = this.Tactical.getEntityByID(_data[0])
-			local dataAsDict = {placeholderName = brother.getBackground().getSelectedPerks()}
+			local dataAsDict = {placeholderName = brother.getBackground().getPlannedPerks()}
 			local parsedCode = this.World.Perks.exportPerkBuilds(dataAsDict)
 			return { parsedCode = parsedCode }
 
@@ -253,12 +253,12 @@ local modName = "mod_plan_perks"
 						{
 							id = 1,
 							type = "title",
-							text = "Copy planned perks"
+							text = "Export Build"
 						},
 						{
 							id = 2,
 							type = "description",
-							text = "Copy the planned perks of this character to your clipboard."
+							text = "Export the planned perks of this character to your clipboard."
 						}
 					];
 				case "mod-plan-perks.menu.copy-all-perks-button":
@@ -271,7 +271,7 @@ local modName = "mod_plan_perks"
 						{
 							id = 2,
 							type = "description",
-							text = "Export all your saved builds, including name, to your clipboard. This results in a code that can later be imported."
+							text = "Export all your saved builds to your clipboard."
 						}
 					];
 				case "mod-plan-perks.menu.paste-perks-button":
@@ -297,7 +297,7 @@ local modName = "mod_plan_perks"
 						{
 							id = 2,
 							type = "description",
-							text = "Apply a perk build from the input field on the left to this character."
+							text = "Apply a perk build from the input field to the left onto this character."
 						}
 					];
 				case "mod-plan-perks.menu.load-all-builds-button":
@@ -310,7 +310,7 @@ local modName = "mod_plan_perks"
 						{
 							id = 2,
 							type = "description",
-							text = "Import any number of builds and save them in the list below, based on the code in the input field to the left."
+							text = "Import any number of builds from the input field to the left and save them in the list below."
 						}
 					];
 				case "mod-plan-perks.menu.list.load-perks-button":
@@ -323,7 +323,7 @@ local modName = "mod_plan_perks"
 						{
 							id = 2,
 							type = "description",
-							text = "Apply this perk build to this character."
+							text = "Apply this perk build onto this character."
 						}
 					];
 				case "mod-plan-perks.menu.list.copy-perks-button":
@@ -336,7 +336,7 @@ local modName = "mod_plan_perks"
 						{
 							id = 2,
 							type = "description",
-							text = "Export this perk build to the clipboard. The resulting code can later be imported."
+							text = "Export this perk build to the clipboard."
 						}
 					];
 
@@ -364,7 +364,7 @@ local modName = "mod_plan_perks"
 						{
 							id = 2,
 							type = "description",
-							text = "If this is selected, planned perks will be overridden if you load a new build. Otherwise, the perks will be added to the already planned perks."
+							text = "If this is selected, planned perks will be overridden if you apply a build. Otherwise, the perks will be added to the already planned perks."
 						}
 					];
 				case "mod-plan-perks.menu.perk-build-name-input":
@@ -424,7 +424,7 @@ local modName = "mod_plan_perks"
 						{
 							id = 1,
 							type = "title",
-							text = "Enter Code"
+							text = "Code Input Field"
 						},
 						{
 							id = 2,

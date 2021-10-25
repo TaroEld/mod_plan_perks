@@ -214,6 +214,9 @@
     height:  4.0rem;
     line-height: 3.0rem;
 }
+.one-button-width-right{
+    left: 17.5rem;
+}
 
 .far-right
 {

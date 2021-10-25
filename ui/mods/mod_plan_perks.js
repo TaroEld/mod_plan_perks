@@ -1,9 +1,125 @@
+// OVERWRITTEN FUNCTIONS --------------------------------------------------------------------------------------------------------------------
+
+CharacterScreenPerksModule.prototype.attachEventHandler = function(_perk)
+{
+	var self = this;
+
+	_perk.Container.on('mouseenter focus' + CharacterScreenIdentifier.KeyEvent.PerksModuleNamespace, null, this, function (_event)
+	{
+		var selectable = !_perk.Unlocked && self.isPerkUnlockable(_perk);
+
+		if (selectable === true && !_perk.Planned)
+		{
+			var selectionLayer = $(this).find('.selection-image-layer:first');
+			selectionLayer.removeClass('display-none').addClass('display-block');
+		}
+	});
+
+	_perk.Container.on('mouseleave blur' + CharacterScreenIdentifier.KeyEvent.PerksModuleNamespace, null, this, function (_event)
+	{
+		var selectable = !_perk.Unlocked && self.isPerkUnlockable(_perk);
+
+		if (selectable === true && !_perk.Planned)
+		{
+			var selectionLayer = $(this).find('.selection-image-layer:first');
+			selectionLayer.removeClass('display-block').addClass('display-none');
+		}
+	});
+
+	_perk.Container.mousedown(this, function (_event)
+	{
+		if (event.which === 3)
+        {
+        	var callback = function (data)
+		    {
+		        if (data === undefined || data === null || typeof (data) !== 'object')
+		        {
+		            console.error('ERROR: Failed to unlock perk. Invalid data result.');
+		            return;
+		        }
+
+		        // check if we have an error
+		        if (ErrorCode.Key in data)
+		        {
+		            self.notifyEventListener(ErrorCode.Key, data[ErrorCode.Key]);
+		        }
+		        else
+		        {
+		            // find the brother and update him
+		            if (CharacterScreenIdentifier.Entity.Id in data)
+		            {
+		                self.mDataSource.updateBrother(data);
+		            }
+		            else
+		            {
+		                console.error('ERROR: Failed to unlock perk. Invalid data result.');
+		            }
+		        }
+		    }
+        	var selectionLayer = _perk.Container.find('.selection-image-layer:first');
+        	if (_perk.Planned === false){
+        		_perk.Planned = true;
+        		selectionLayer.attr('src', Path.GFX + 'ui/perks/selection_frame_planning.png');
+        		selectionLayer.removeClass('display-none').addClass('display-block');
+        		self.mDataSource.notifyBackendUpdatePlannedPerk(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], _perk.ID, 1, callback)
+        	}
+        	else{
+        		_perk.Planned = false;
+        		selectionLayer.attr('src', Path.GFX + Asset.PERK_SELECTION_FRAME);
+        		if(!_perk.Unlocked){
+        			selectionLayer.removeClass('display-block').addClass('display-none');
+        		}
+        		self.mDataSource.notifyBackendUpdatePlannedPerk(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], _perk.ID, 0, callback)
+        	}
+        	
+        }
+		if (event.which === 1)
+        {
+			var selectable = !_perk.Unlocked && self.isPerkUnlockable(_perk);
+
+			if (selectable == true && self.mDataSource.isInStashMode())
+			{
+				self.showPerkUnlockDialog(_perk);
+			}
+		}
+	});
+}
+
+CharacterScreenPerksModule.prototype.loadPerkTreesWithBrotherData = function (_brother)
+{
+	var self = this;
+	var callback = function(_data){
+		if (!_data[0]){
+			self.resetPerkTree(self.mPerkTree);
+			self.initPerkToImageDict(self.mPerkTree)
+		}
+		else{
+			self.setupPerkTree(_brother[CharacterScreenIdentifier.Perk.Tree]);
+			self.initPerkToImageDictLegends(_data[1])
+		}
+
+		if (CharacterScreenIdentifier.Perk.Key in _brother)
+		{
+		    self.initPerkTree(self.mPerkTree, _brother[CharacterScreenIdentifier.Perk.Key]);
+		    self.initPlannedPerksInTree(self.mPerkTree, _brother["PlannedPerks"])
+		}
+
+		if (CharacterScreenIdentifier.Entity.Id in _brother)
+		{
+		    self.setupPerkTreeTooltips(self.mPerkTree, _brother[CharacterScreenIdentifier.Entity.Id]);
+		}
+	}
+	this.mDataSource.notifyBackendQueryForLegends(callback)
+
+};
+
+// HOOKED FUNCTIONS --------------------------------------------------------------------------------------------------------------------
 
 var create = CharacterScreenPerksModule.prototype.create
 CharacterScreenPerksModule.prototype.create = function(_parentDiv)
 {
     create.call(this, _parentDiv);
-    this.createPerkDiv(_parentDiv)
+    this.createPerkMenuButtons(_parentDiv)
 };
 var destroyDIV = CharacterScreenPerksModule.prototype.destroyDIV
 CharacterScreenPerksModule.prototype.destroyDIV = function ()
@@ -40,15 +156,17 @@ CharacterScreenPerksModule.prototype.hide = function ()
     }
 };
 
+// DIV CREATION FUNCTIONS ---------------------------------------------------------------------------------------------------------------------------------------------------------
 
-CharacterScreenPerksModule.prototype.createPerkDiv = function (_parentDiv)
+//buttons to reset and open the popup, listeners
+CharacterScreenPerksModule.prototype.createPerkMenuButtons = function (_parentDiv)
 {
 
 
 
 	if(!("perks.saved-list-loaded" in this.mDataSource.mEventListener)){
 		this.mDataSource.mEventListener['perks.saved-list-loaded'] = [ ];
-		this.mDataSource.addListener('perks.saved-list-loaded', jQuery.proxy(this.setupPerkList, this));
+		this.mDataSource.addListener('perks.saved-list-loaded', jQuery.proxy(this.setupPerkBuildList, this));
 		this.mDataSource.addListener(CharacterScreenDatasourceIdentifier.Brother.Selected, jQuery.proxy(this.updateDynamicContent, this));
 		this.mDataSource.addListener(CharacterScreenDatasourceIdentifier.Brother.Updated, jQuery.proxy(this.updateDynamicContent, this));
 	}
@@ -112,32 +230,15 @@ CharacterScreenPerksModule.prototype.showSaveAndLoadPerksDialog = function()
     var self = this;
     this.mPopupDialog = $('.character-screen').createPopupDialog('Save and Load Perk Builds', null, null, 'save-and-load-perks-popup');
     this.mPopupDialog.addPopupDialogContent(this.createSaveAndLoadPerksDialogContent(this.mPopupDialog));
-    this.mPopupDialog.addPopupDialogCancelButton(function (_dialog)
-    {
-        _dialog.destroyPopupDialog();
-        self.mDataSource.notifyBackendPopupDialogIsVisible(false);
-    });
+    this.mPopupDialog.addPopupDialogButton('Cancel', 'l-cancel-button', function (_dialog)
+   {
+       _dialog.destroyPopupDialog();
+       self.mDataSource.notifyBackendPopupDialogIsVisible(false);
+   })
 
 };
 
-CharacterScreenPerksModule.prototype.getCurrentlyPlannedPerks = function()
-{
-	var numPlanned = 0;
-	for (var row = 0; row < this.mPerkTree.length; ++row)
-	{
-		for (var i = 0; i < this.mPerkTree[row].length; ++i)
-		{
 
-			var perk = this.mPerkTree[row][i];
-			if (perk.Planned) numPlanned++
-		}
-	}
-	return numPlanned
-}
-
-CharacterScreenPerksModule.prototype.checkForDelimiters = function(_string){
-	return (_string.search("°") ==  -1 && _string.search("~") ==  -1)
-}
 
 CharacterScreenPerksModule.prototype.createCurrentCharacterContainer = function (_dialog)
 {
@@ -166,7 +267,6 @@ CharacterScreenPerksModule.prototype.createCurrentCharacterContainer = function 
 	this.mSwitchBrotherContainer.append(buttonLayout);
 	button = buttonLayout.createImageButton(Path.GFX + "ui/buttons/switch_previous_brother.png", function ()
     {
-    	console.error("called switch_previous_brother")
     	self.mDataSource.modPerkSwitchPreviousBrother();
     }, "", 3);
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.switch-previous-brother-button" });
@@ -175,7 +275,6 @@ CharacterScreenPerksModule.prototype.createCurrentCharacterContainer = function 
 	this.mSwitchBrotherContainer.append(buttonLayout);
 	button = buttonLayout.createImageButton(Path.GFX + "ui/buttons/switch_next_brother.png", function ()
     {
-    	console.error("called switch_next_brother")
     	self.mDataSource.modPerkSwitchNextBrother();
     }, "", 3);
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.switch-next-brother-button" });
@@ -230,6 +329,7 @@ CharacterScreenPerksModule.prototype.fillPerkImageContainers = function ()
 
 CharacterScreenPerksModule.prototype.updateDynamicContent = function (_dataSource, _brother)
 {
+	//updates the content that depends on the specific bro, called by event listener on update/switeched bro and during setup
 	var self = this;
 	if (this.mPopupDialog === undefined || this.mPopupDialog === null) return
 	this.mListScrollContainer.empty()
@@ -241,11 +341,12 @@ CharacterScreenPerksModule.prototype.updateDynamicContent = function (_dataSourc
 	nameContainer.css("height", "7rem")
 	this.mPortraitContainer.append(nameContainer)
 	
+	//otherwise images are wrong, dimensions or wrong brother
 	setTimeout(function(){
 		self.mPortraitImage = $('.portrait-container').find("img").eq(1).clone()
 		self.mPortraitContainer.append(self.mPortraitImage)
 		self.fillPerkImageContainers()
-	}, 50)
+	}, 25)
 	
 }
 
@@ -488,7 +589,7 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
 
 
 
-    buttonLayout = $('<div class="l-button"/>');
+    buttonLayout = $('<div class="l-button one-button-width-right"/>');
     filterBarButtonsContainer.append(buttonLayout)
 	button = buttonLayout.createTextButton("Export All Builds", function ()
     {
@@ -509,18 +610,9 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.copy-all-perks-button" });
 
 
-
-
-
-
-
-	//scroll container
+	//List
 	var listContainerLayout = $('<div class="l-list-container"/>');
 	loadPerksContainer.append(listContainerLayout);
-
-
-
-
 
 	var mylist = $('<div class="ui-control list"/>');
 
@@ -532,18 +624,14 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
 	 // NOTE: create scrollbar (must be after the list was appended to the DOM!)
 	 this.mListContainer = mylist
 	 this.mListScrollContainer = scrollContainer
-
-
-
-
-
-	 this.mSortingFunction = "byAlphabetical"
+	this.mSortingFunction = "byAlphabetical"
 	this.mDataSource.notifyBackendLoadSavedPerks()
+
 
     return result;
     
 };
-CharacterScreenPerksModule.prototype.setupPerkList = function(_datasource, _data){
+CharacterScreenPerksModule.prototype.setupPerkBuildList = function(_datasource, _data){
 	if (this.mListScrollContainer === undefined){
 		console.error("mListScrollContainer undefined")
 		return
@@ -555,7 +643,7 @@ CharacterScreenPerksModule.prototype.setupPerkList = function(_datasource, _data
 	var divResultList = []
 	
 	for (var key in _data){
-	  divResultList.push(this.addListEntry(key))
+	  divResultList.push(this.addListEntryToPerkBuildList(key))
 	}
 	var sortingFunctions = {
 		byMatchingPerks : function(a, b) {
@@ -623,7 +711,7 @@ CharacterScreenPerksModule.prototype.setupPerkList = function(_datasource, _data
          smoothScroll: false
      });
 }
-CharacterScreenPerksModule.prototype.addListEntry = function (_data)
+CharacterScreenPerksModule.prototype.addListEntryToPerkBuildList = function (_data)
 {
 	var self = this;
 	var brother = this.mDataSource.getSelectedBrother()
@@ -741,92 +829,26 @@ CharacterScreenPerksModule.prototype.addListEntry = function (_data)
 
 };
 
-
-
-CharacterScreenPerksModule.prototype.attachEventHandler = function(_perk)
+CharacterScreenPerksModule.prototype.getCurrentlyPlannedPerks = function()
 {
-	var self = this;
-
-	_perk.Container.on('mouseenter focus' + CharacterScreenIdentifier.KeyEvent.PerksModuleNamespace, null, this, function (_event)
+	var numPlanned = 0;
+	for (var row = 0; row < this.mPerkTree.length; ++row)
 	{
-		var selectable = !_perk.Unlocked && self.isPerkUnlockable(_perk);
-
-		if (selectable === true && !_perk.Planned)
+		for (var i = 0; i < this.mPerkTree[row].length; ++i)
 		{
-			var selectionLayer = $(this).find('.selection-image-layer:first');
-			selectionLayer.removeClass('display-none').addClass('display-block');
+
+			var perk = this.mPerkTree[row][i];
+			if (perk.Planned) numPlanned++
 		}
-	});
-
-	_perk.Container.on('mouseleave blur' + CharacterScreenIdentifier.KeyEvent.PerksModuleNamespace, null, this, function (_event)
-	{
-		var selectable = !_perk.Unlocked && self.isPerkUnlockable(_perk);
-
-		if (selectable === true && !_perk.Planned)
-		{
-			var selectionLayer = $(this).find('.selection-image-layer:first');
-			selectionLayer.removeClass('display-block').addClass('display-none');
-		}
-	});
-
-	_perk.Container.mousedown(this, function (_event)
-	{
-		if (event.which === 3)
-        {
-        	var callback = function (data)
-		    {
-		        if (data === undefined || data === null || typeof (data) !== 'object')
-		        {
-		            console.error('ERROR: Failed to unlock perk. Invalid data result.');
-		            return;
-		        }
-
-		        // check if we have an error
-		        if (ErrorCode.Key in data)
-		        {
-		            self.notifyEventListener(ErrorCode.Key, data[ErrorCode.Key]);
-		        }
-		        else
-		        {
-		            // find the brother and update him
-		            if (CharacterScreenIdentifier.Entity.Id in data)
-		            {
-		                self.mDataSource.updateBrother(data);
-		            }
-		            else
-		            {
-		                console.error('ERROR: Failed to unlock perk. Invalid data result.');
-		            }
-		        }
-		    }
-        	var selectionLayer = _perk.Container.find('.selection-image-layer:first');
-        	if (_perk.Planned === false){
-        		_perk.Planned = true;
-        		selectionLayer.attr('src', Path.GFX + 'ui/perks/selection_frame_planning.png');
-        		selectionLayer.removeClass('display-none').addClass('display-block');
-        		self.mDataSource.notifyBackendUpdatePlannedPerk(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], _perk.ID, 1, callback)
-        	}
-        	else{
-        		_perk.Planned = false;
-        		selectionLayer.attr('src', Path.GFX + Asset.PERK_SELECTION_FRAME);
-        		if(!_perk.Unlocked){
-        			selectionLayer.removeClass('display-block').addClass('display-none');
-        		}
-        		self.mDataSource.notifyBackendUpdatePlannedPerk(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], _perk.ID, 0, callback)
-        	}
-        	
-        }
-		if (event.which === 1)
-        {
-			var selectable = !_perk.Unlocked && self.isPerkUnlockable(_perk);
-
-			if (selectable == true && self.mDataSource.isInStashMode())
-			{
-				self.showPerkUnlockDialog(_perk);
-			}
-		}
-	});
+	}
+	return numPlanned
 }
+
+CharacterScreenPerksModule.prototype.checkForDelimiters = function(_string){
+	return (_string.search("°") ==  -1 && _string.search("~") ==  -1)
+}
+
+
 CharacterScreenPerksModule.prototype.initPerkToImageDict = function (_perkTree)
 {
 	this.mPerksToImageDict = {}
@@ -889,34 +911,78 @@ CharacterScreenPerksModule.prototype.initPlannedPerksInTree = function (_perkTre
 	}
 }
 
-
-CharacterScreenPerksModule.prototype.loadPerkTreesWithBrotherData = function (_brother)
+CharacterScreenDatasource.prototype.modPerkSwitchPreviousBrother = function(_withoutNotify)
 {
-	var self = this;
-	var callback = function(_data){
-		if (!_data[0]){
-			self.resetPerkTree(self.mPerkTree);
-			self.initPerkToImageDict(self.mPerkTree)
-		}
-		else{
-			self.setupPerkTree(_brother[CharacterScreenIdentifier.Perk.Tree]);
-			self.initPerkToImageDictLegends(_data[1])
-		}
+    if (this.mBrothersList == null)
+        return;
 
-		if (CharacterScreenIdentifier.Perk.Key in _brother)
-		{
-		    self.initPerkTree(self.mPerkTree, _brother[CharacterScreenIdentifier.Perk.Key]);
-		    self.initPlannedPerksInTree(self.mPerkTree, _brother["PlannedPerks"])
-		}
+    var currentIndex = this.mSelectedBrotherIndex;
 
-		if (CharacterScreenIdentifier.Entity.Id in _brother)
-		{
-		    self.setupPerkTreeTooltips(self.mPerkTree, _brother[CharacterScreenIdentifier.Entity.Id]);
-		}
-	}
-	this.mDataSource.notifyBackendQueryForLegends(callback)
+    for (var i = this.mSelectedBrotherIndex - 1; i >= 0; --i)
+    {
+        if (this.mBrothersList[i] !== null)
+        {
+            this.mSelectedBrotherIndex = i;
+            break;
+        }
+    }
 
+    if (this.mSelectedBrotherIndex == currentIndex)
+    {
+        for (var i = this.mBrothersList.length - 1; i > currentIndex; --i)
+        {
+            if (this.mBrothersList[i] !== null)
+            {
+                this.mSelectedBrotherIndex = i;
+                break;
+            }
+        }
+    }
+
+    // notify every listener
+    if (_withoutNotify === undefined || _withoutNotify !== true)
+    {
+        this.notifyEventListener(CharacterScreenDatasourceIdentifier.Brother.Selected, this.getSelectedBrother());
+    }
 };
+
+CharacterScreenDatasource.prototype.modPerkSwitchNextBrother = function(_withoutNotify)
+{
+    if (this.mBrothersList == null)
+        return;
+
+    var currentIndex = this.mSelectedBrotherIndex;
+
+    for (var i = this.mSelectedBrotherIndex + 1; i < this.mBrothersList.length; ++i)
+    {
+        if (this.mBrothersList[i] !== null)
+        {
+            this.mSelectedBrotherIndex = i;
+            break;
+        }
+    }
+
+    if(this.mSelectedBrotherIndex == currentIndex)
+    {  
+        for (var i = 0; i < this.mSelectedBrotherIndex; ++i)
+        {
+            if (this.mBrothersList[i] !== null)
+            {
+                this.mSelectedBrotherIndex = i;
+                break;
+            }
+        }
+    }
+
+    // notify every listener
+	if (_withoutNotify === undefined || _withoutNotify !== true)
+	{
+		this.notifyEventListener(CharacterScreenDatasourceIdentifier.Brother.Selected, this.getSelectedBrother());
+	}
+};
+
+
+//BACKEND QUERIES --------------------------------------------------------------------------------------------------------------------------------------------------
 
 CharacterScreenDatasource.prototype.notifyBackendQueryForLegends = function(_callback)
 {
@@ -1005,75 +1071,14 @@ CharacterScreenDatasource.prototype.notifyBackendDeletePerkBuild = function(_per
 
 	SQ.call(this.mSQHandle, 'onDeletePerkBuild', [_perkBuildID], _callback);
 }
-
-
-
-CharacterScreenDatasource.prototype.modPerkSwitchPreviousBrother = function(_withoutNotify)
+CharacterScreenDatasource.prototype.notifyBackendQueryForLegends = function(_callback)
 {
-    if (this.mBrothersList == null)
-        return;
+	SQ.call(this.mSQHandle, 'onQueryLegends', [], _callback);
+}
 
-    var currentIndex = this.mSelectedBrotherIndex;
-
-    for (var i = this.mSelectedBrotherIndex - 1; i >= 0; --i)
-    {
-        if (this.mBrothersList[i] !== null)
-        {
-            this.mSelectedBrotherIndex = i;
-            break;
-        }
-    }
-
-    if (this.mSelectedBrotherIndex == currentIndex)
-    {
-        for (var i = this.mBrothersList.length - 1; i > currentIndex; --i)
-        {
-            if (this.mBrothersList[i] !== null)
-            {
-                this.mSelectedBrotherIndex = i;
-                break;
-            }
-        }
-    }
-
-    // notify every listener
-    if (_withoutNotify === undefined || _withoutNotify !== true)
-    {
-        this.notifyEventListener(CharacterScreenDatasourceIdentifier.Brother.Selected, this.getSelectedBrother());
-    }
-};
-
-CharacterScreenDatasource.prototype.modPerkSwitchNextBrother = function(_withoutNotify)
+CharacterScreenDatasource.prototype.destroyPopupDialog = function()
 {
-    if (this.mBrothersList == null)
-        return;
-
-    var currentIndex = this.mSelectedBrotherIndex;
-
-    for (var i = this.mSelectedBrotherIndex + 1; i < this.mBrothersList.length; ++i)
-    {
-        if (this.mBrothersList[i] !== null)
-        {
-            this.mSelectedBrotherIndex = i;
-            break;
-        }
-    }
-
-    if(this.mSelectedBrotherIndex == currentIndex)
-    {  
-        for (var i = 0; i < this.mSelectedBrotherIndex; ++i)
-        {
-            if (this.mBrothersList[i] !== null)
-            {
-                this.mSelectedBrotherIndex = i;
-                break;
-            }
-        }
-    }
-
-    // notify every listener
-	if (_withoutNotify === undefined || _withoutNotify !== true)
-	{
-		this.notifyEventListener(CharacterScreenDatasourceIdentifier.Brother.Selected, this.getSelectedBrother());
-	}
-};
+	var popup = $(".ui-control.popup-dialog-dialog-modal-background")
+	popup.destroyPopupDialog()
+   	this.notifyBackendPopupDialogIsVisible(false);
+}

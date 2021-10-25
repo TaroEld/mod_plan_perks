@@ -49,6 +49,41 @@ local modName = "mod_plan_perks"
 				this.World.Perks.onDeserialize(_in)
 			}
 		}
+		local helper_handleContextualKeyInput = o.helper_handleContextualKeyInput
+		o.helper_handleContextualKeyInput <- function( _key )
+		{
+			if (this.isInCharacterScreen() && _key.getState() == 0)
+			{
+				switch(_key.getKey())
+				{
+				case 41:
+					this.toggleCharacterScreen(_key);
+					return false
+				}
+			}
+			return helper_handleContextualKeyInput(_key)
+		}
+		
+		o.toggleCharacterScreen <- function(_key = null)
+		{
+			if (this.m.CharacterScreen.isVisible())
+			{
+				if (this.m.CharacterScreen.m.PopupDialogVisible)
+				{
+					if (_key == null) return
+					else this.m.CharacterScreen.m.JSDataSourceHandle.asyncCall("destroyPopupDialog", null);
+				}
+				else this.character_screen_onClosePressed();
+			}
+			else if (this.m.WorldTownScreen.isVisible())
+			{
+				this.showCharacterScreenFromTown();
+			}
+			else
+			{
+				this.showCharacterScreen();
+			}
+		}
 
 	})
 
@@ -117,7 +152,6 @@ local modName = "mod_plan_perks"
 	})
 	::mods_hookNewObject("ui/screens/character/character_screen", function(o){
 		//see the JS file for documentation about their function
-		
 		o.onUpdatePlannedPerk <- function(_data){
 			//_data = _entity, _perk, _bool
 			local brother = this.Tactical.getEntityByID(_data[0])
@@ -457,7 +491,11 @@ local modName = "mod_plan_perks"
 							type = "description",
 							text = "Switch to the next brother in your roster."
 						}
-					];			
+					];		
+
+
+
+				
 				
 			}
 			return general_queryUIElementTooltipData( _entityId, _elementId, _elementOwner )

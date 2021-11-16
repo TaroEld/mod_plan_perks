@@ -49,6 +49,7 @@ local modName = "mod_plan_perks"
 				this.World.Perks.onDeserialize(_in)
 			}
 		}
+		
 		local helper_handleContextualKeyInput = o.helper_handleContextualKeyInput
 		o.helper_handleContextualKeyInput <- function( _key )
 		{
@@ -266,6 +267,19 @@ local modName = "mod_plan_perks"
 							id = 2,
 							type = "description",
 							text = "Clear all planned perks for this character."
+						}
+					];
+				case "mod-plan-perks.perk-num-label":
+					return [
+						{
+							id = 1,
+							type = "title",
+							text = "Number of planned perks"
+						},
+						{
+							id = 2,
+							type = "description",
+							text = "Number of planned perks for this character."
 						}
 					];
 				case "mod-plan-perks.menu.save-perks-button":

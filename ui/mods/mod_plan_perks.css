@@ -387,3 +387,52 @@
     vertical-align: middle;
 }
 
+
+.character-screen-container .perk-count-panel
+{
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3.4rem;
+    width: 100%;
+    position: absolute;
+
+    z-index: 10;
+    /*border-top: 1px rgba(130, 130, 130, 1) solid;*/
+}
+
+.character-screen-container .perk-count-panel .perk-count-container
+{
+    top: 2.2rem;
+    right: 14.0rem;
+    bottom: 0;
+    width: 6.2rem;
+    height: 2.4rem;
+    position: absolute;
+    margin: auto;
+}
+
+.character-screen-container .perk-count-panel .perk-count-container img
+{
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 2.4rem;
+    height: 2.4rem;
+    position: absolute;
+    margin: auto;
+}
+
+.character-screen-container .perk-count-panel .perk-count-container .label
+{
+    top: 0;
+    left: 2.6rem;
+    bottom: 0;
+    width: 3.8rem;
+    height: 2.0rem;
+    position: absolute;
+    margin: auto;
+
+    line-height: 2.0rem;
+    text-align: left;
+}

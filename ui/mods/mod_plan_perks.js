@@ -101,7 +101,8 @@ CharacterScreenPerksModule.prototype.loadPerkTreesWithBrotherData = function (_b
 		if (CharacterScreenIdentifier.Perk.Key in _brother)
 		{
 		    self.initPerkTree(self.mPerkTree, _brother[CharacterScreenIdentifier.Perk.Key]);
-		    self.initPlannedPerksInTree(self.mPerkTree, _brother["PlannedPerks"])
+		    self.initPlannedPerksInTree(self.mPerkTree, _brother["PlannedPerks"]);
+		    self.updatePerkCountLabel();
 		}
 
 		if (CharacterScreenIdentifier.Entity.Id in _brother)
@@ -120,6 +121,7 @@ CharacterScreenPerksModule.prototype.create = function(_parentDiv)
 {
     create.call(this, _parentDiv);
     this.createPerkMenuButtons(_parentDiv)
+
 };
 var destroyDIV = CharacterScreenPerksModule.prototype.destroyDIV
 CharacterScreenPerksModule.prototype.destroyDIV = function ()
@@ -222,6 +224,24 @@ CharacterScreenPerksModule.prototype.createPerkMenuButtons = function (_parentDi
     });
     this.mSavePerksButton.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.save-perks-button" });
     
+    this.mPerkCountPanel = $('<div class="perk-count-panel"/>');
+    _parentDiv.append(this.mPerkCountPanel);
+
+    this.mPerkCountContainer = $('<div class="perk-count-container"/>');
+    this.mPerkCountPanel.append(this.mPerkCountContainer);
+    var rosterSizeImage = $('<img/>');
+    rosterSizeImage.attr('src', Path.GFX + 'ui/perks/perks_planning.png'); // ICON_DAMAGE_DEALT
+    this.mPerkCountContainer.append(rosterSizeImage);
+    this.mPerkCountLabel = $('<div class="label text-font-small font-bold font-color-value"/>');
+    this.mPerkCountContainer.append(this.mPerkCountLabel);
+    this.mPerkCountContainer.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.perk-num-label" });
+    
+};
+
+CharacterScreenPerksModule.prototype.updatePerkCountLabel = function ()
+{
+	var _perksMax = 10;
+    this.mPerkCountLabel.html('' + this.getCurrentlyPlannedPerks());
 };
 
 CharacterScreenPerksModule.prototype.showSaveAndLoadPerksDialog = function()
@@ -1082,3 +1102,90 @@ CharacterScreenDatasource.prototype.destroyPopupDialog = function()
 	popup.destroyPopupDialog()
    	this.notifyBackendPopupDialogIsVisible(false);
 }
+
+ConsoleScreen.prototype.setupEventHandler = function ()
+{
+	this.removeEventHandler();
+
+	var self = this;
+	$.each(this.mOptionsButtons, function(_key, _value) {
+		var type = _value.Type;
+		_value.Button.click(self, function(_event) {
+			self.toggleVisibleLogEntries(type);
+		});
+	});
+
+	this.mSwitchToOptionsButton.click(this, function(_event) {
+		var self = _event.data;
+		self.toggleOptionsBar();
+	});
+
+	this.mSwitchToJSButton.click(this, function(_event) {
+		var self = _event.data;
+		self.switchExecutionEnviroment(ConsoleScreenIdentifier.ExecutionEnviroment.JS);
+	});
+
+	this.mSwitchToSQButton.click(this, function(_event) {
+		var self = _event.data;
+		self.switchExecutionEnviroment(ConsoleScreenIdentifier.ExecutionEnviroment.SQ);
+	});
+
+	this.mCommandInput.on('keyup' + ConsoleScreenIdentifier.KeyEvent.Namespace, null, this, function(event) {
+		var self = event.data;
+
+		switch(event.which)
+		{
+			case KeyConstants.ArrowUp:
+			{
+				self.scrollHistoryUp();
+			} break;
+			case KeyConstants.ArrowDown:
+			{
+				self.scrollHistoryDown();
+			} break;
+			case KeyConstants.Return:
+			{
+				self.executeCommand($(this).val());
+			
+				/*
+				event.preventDefault();
+				event.stopPropagation();
+				*/
+			} break;
+		}
+	});
+
+	// bind global key event handler
+	$(document).on('keyup' + ConsoleScreenIdentifier.KeyEvent.Namespace, null, this, function(event) {
+		var self = event.data;
+		
+		switch(event.which)
+		{
+			case KeyConstants.PageUp:
+			{
+				self.toggleUp();
+
+				event.preventDefault();
+				event.stopPropagation();
+				break;
+			}
+			case KeyConstants.PageDown:
+			{
+				self.toggleDown();
+
+				event.preventDefault();
+				event.stopPropagation();
+				break;
+			}
+			case KeyConstants.F11:
+			{
+				self.toggle();
+
+				event.preventDefault();
+				event.stopPropagation();
+				break;
+			} 
+		}
+	});
+
+};

@@ -27,6 +27,7 @@ this.perk_manager <- {
 	}
 
 	function stripNameFromCode(_code){
+		if(!(this.m.BetweenPerkDelimiter in _code)) return
 		local result = split(_code, this.m.BetweenPerkDelimiter)
 		return result.slice(1, result.len()-1)
 	}

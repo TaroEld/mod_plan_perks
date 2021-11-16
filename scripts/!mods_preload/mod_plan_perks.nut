@@ -98,11 +98,11 @@ local modName = "mod_plan_perks"
 			return this.m.PlannedPerks
 		}
 
-		o.updatePlannedPerk <- function(_perkID, _val){
+		o.updatePlannedPerk <- function(_perkID, _add){
 			if (!this.getContainer().getActor().getFlags().get("PlannedPerks")){
 				this.initPlannedPerks()
 			}
-			if (_val == 1){
+			if (_add == 1){
 				if (this.m.PlannedPerks.find(_perkID) == null){
 					this.m.PlannedPerks.push(_perkID)
 				}
@@ -113,11 +113,15 @@ local modName = "mod_plan_perks"
 				}
 			}
 		}
+
 		o.setPlannedPerks <- function(_perks, _override = true){
+			if (!this.getContainer().getActor().getFlags().get("PlannedPerks")){
+				this.initPlannedPerks()
+			}
 			if (_override) this.m.PlannedPerks = _perks
 			else this.addToPlannedPerks(_perks)
-			
 		}
+
 		o.addToPlannedPerks <- function(_perks){
 			foreach (perkID in _perks){
 				this.updatePlannedPerk(perkID, 1)
@@ -185,7 +189,8 @@ local modName = "mod_plan_perks"
 			//data = brotherID, perkBuildID
 			local brother = this.Tactical.getEntityByID(_data[0])
 			local perkIDArray = this.World.Perks.stripNameFromCode(_data[1])
-			brother.getBackground().setPlannedPerks(perkIDArray, _data[2])
+			//return error?
+			if(perkIDArray != null) brother.getBackground().setPlannedPerks(perkIDArray, _data[2])
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
 		o.onImportPerkBuildsFromCode <- function(_data){

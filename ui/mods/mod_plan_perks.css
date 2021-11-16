@@ -66,11 +66,9 @@
     position: relative;
     float: left;
 }
-.current-character-container .unlocked-perks-container{
-    width: 100%;
-    height: 50%;
-}
-.current-character-container .planned-perks-container{
+.current-character-container .unlocked-perks-container,
+.current-character-container .planned-perks-container
+{
     width: 100%;
     height: 50%;
 }
@@ -84,6 +82,7 @@
     vertical-align: middle;
     z-index: 99999;
 }
+
 .switch-brother-button-container{
     width: 15rem;
     height: 5rem;
@@ -128,7 +127,9 @@
     width: 100%;
     height:  4.0rem;
 }
-.save-perks-from-code-container  .l-button
+.save-perks-from-code-container  .l-button,
+.load-perks-from-code-container  .l-button,
+.sort-bar-button-container  .l-button
 {
 
     width: 17.5rem;
@@ -174,23 +175,7 @@
     float: left;
 }
 
-.load-perks-from-code-container
-{
-    width: 100%;
-    height: 4.0rem;
-    position: relative;
-    margin-top: 2.0rem;
-}
-
-.load-perks-from-code-container  .l-button
-{
-
-    width: 17.5rem;
-    position: relative;
-    float: left;
-    height:  4.0rem;
-    line-height: 3.0rem;
-}
+.load-perks-from-code-container,
 .sort-bar-container
 {
     width: 100%;
@@ -198,6 +183,7 @@
     position: relative;
     margin-top: 2.0rem;
 }
+
 .sort-bar-button-container
 {
     width: 100%;
@@ -205,15 +191,7 @@
     position: absolute;
 }
 
-.sort-bar-button-container  .l-button
-{
 
-    width: 17.5rem;
-    position: relative;
-    float: left;
-    height:  4.0rem;
-    line-height: 3.0rem;
-}
 .one-button-width-right{
     left: 17.5rem;
 }
@@ -248,19 +226,13 @@
 {
     top: 0;
     bottom: 0;
-    height: 2.0rem;
     position: relative;
     margin: auto;
     margin-left: 1.4rem;
-
     white-space: nowrap;
     height:  4.0rem;
     line-height: 3.0rem;
 }
-
-
-
-
 
 .load-perks-container .l-list-container
 {

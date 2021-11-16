@@ -137,6 +137,11 @@ CharacterScreenPerksModule.prototype.destroyDIV = function ()
     this.mPlanPerksButtonsPanel.remove();
     this.mPlanPerksButtonsPanel = null;
 
+    this.mPerkCountPanel.empty();
+    this.mPerkCountPanel.remove();
+    this.mPerkCountPanel = null;
+
+
     destroyDIV.call(this)
 };
 
@@ -147,6 +152,9 @@ CharacterScreenPerksModule.prototype.show = function ()
     if (this.mPlanPerksButtonsPanel !== undefined && this.mPlanPerksButtonsPanel !== null){
     	this.mPlanPerksButtonsPanel.removeClass('display-none').addClass('display-block');
     }
+    if (this.mPerkCountPanel !== undefined && this.mPerkCountPanel !== null){
+    	this.mPerkCountPanel.removeClass('display-none').addClass('display-block');
+    }
 };
 
 var hide = CharacterScreenPerksModule.prototype.hide
@@ -155,6 +163,9 @@ CharacterScreenPerksModule.prototype.hide = function ()
     hide.call(this)
     if (this.mPlanPerksButtonsPanel !== undefined && this.mPlanPerksButtonsPanel !== null){
     	this.mPlanPerksButtonsPanel.removeClass('display-block').addClass('display-none');
+    }
+    if (this.mPerkCountPanel !== undefined && this.mPerkCountPanel !== null){
+    	this.mPerkCountPanel.removeClass('display-block').addClass('display-none');
     }
 };
 

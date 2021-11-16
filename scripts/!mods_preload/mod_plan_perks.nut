@@ -181,14 +181,14 @@ local modName = "mod_plan_perks"
 			brother.getBackground().setPlannedPerks(this.World.Perks.getPerkBuildCode(_data[1]), _data[2])
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
-		o.onApplyPerkBuildFromCode <-function(_data){
+		o.onApplyPerkBuildFromCode <- function(_data){
 			//data = brotherID, perkBuildID
 			local brother = this.Tactical.getEntityByID(_data[0])
 			local perkIDArray = this.World.Perks.stripNameFromCode(_data[1])
 			brother.getBackground().setPlannedPerks(perkIDArray, _data[2])
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
-		o.onImportPerkBuildsFromCode <-function(_data){
+		o.onImportPerkBuildsFromCode <- function(_data){
 			//data = code containing string to parse with name and perk array
 			this.World.Perks.importPerkBuilds(_data[0])
 		}

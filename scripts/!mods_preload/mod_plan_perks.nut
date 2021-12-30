@@ -18,8 +18,8 @@ local modName = "mod_plan_perks"
 		o.addPlannedPerksToUIData <- function(_entity){
 			local PlannedPerksDict = {}
 			//weird error
-			if (!("getBackground" in _entity) || _entity.getBackground() == null) return PlannedPerksDict
-			foreach(key in _entity.getBackground().m.PlannedPerks){
+			if (!("PlannedPerks" in _entity.m)) return PlannedPerksDict
+			foreach(key in _entity.m.PlannedPerks){
 				PlannedPerksDict[key] <- 1
 			}
 			return PlannedPerksDict
@@ -34,20 +34,18 @@ local modName = "mod_plan_perks"
 			this.m.PerkBuilds = this.new("scripts/states/world/perk_manager");
 			this.World.Perks <- this.WeakTableRef(this.m.PerkBuilds);
 		}
+
 		local onSerialize = o.onSerialize	
 		o.onSerialize = function(_out){
-			this.World.Flags.set("Perk_Manager", true)
+			this.World.Perks.serializeWithFlags()
 			onSerialize(_out)
-			this.World.Perks.onSerialize(_out)
 		}
 
 
 		local onDeserialize = o.onDeserialize
 		o.onDeserialize = function(_in){
 			onDeserialize(_in)
-			if (this.World.Flags.has("Perk_Manager")){
-				this.World.Perks.onDeserialize(_in)
-			}
+			this.World.Perks.deserializeWithFlags()
 		}
 		
 		local helper_handleContextualKeyInput = o.helper_handleContextualKeyInput
@@ -88,91 +86,41 @@ local modName = "mod_plan_perks"
 
 	})
 
-	::mods_hookExactClass("skills/backgrounds/character_background", function(o){
-		o.m.PlannedPerks <- []
-		o.initPlannedPerks <- function(){
-			this.m.PlannedPerks = []
-			this.getContainer().getActor().getFlags().set("PlannedPerks", true)
-		}
-		o.getPlannedPerks <- function(){
-			return this.m.PlannedPerks
-		}
 
-		o.updatePlannedPerk <- function(_perkID, _add){
-			if (!this.getContainer().getActor().getFlags().get("PlannedPerks")){
-				this.initPlannedPerks()
-			}
-			if (_add == 1){
-				if (this.m.PlannedPerks.find(_perkID) == null){
-					this.m.PlannedPerks.push(_perkID)
-				}
-			}
-			else{
-				if (this.m.PlannedPerks.find(_perkID) != null){
-					this.m.PlannedPerks.remove(this.m.PlannedPerks.find(_perkID))
-				}
-			}
-		}
-
-		o.setPlannedPerks <- function(_perks, _override = true){
-			if (!this.getContainer().getActor().getFlags().get("PlannedPerks")){
-				this.initPlannedPerks()
-			}
-			if (_override) this.m.PlannedPerks = _perks
-			else this.addToPlannedPerks(_perks)
-		}
-
-		o.addToPlannedPerks <- function(_perks){
-			foreach (perkID in _perks){
-				this.updatePlannedPerk(perkID, 1)
-			}
-		}
-	})
 	::mods_hookExactClass("entity/tactical/player", function(o){
+		o.m.PlannedPerks <- []
+
 		local onSerialize = o.onSerialize	
 		o.onSerialize = function(_out){
+			this.World.Perks.serializeBrotherPerksWithFlag(this)
 			onSerialize(_out)
-			if(this.getFlags().get("PlannedPerks")){
-				local PlannedPerks = this.getBackground().m.PlannedPerks
-				local len = PlannedPerks.len()
-				_out.writeU8(len);
-				foreach(perkID in PlannedPerks){
-					_out.writeString(perkID)
-				}
-			}
 		}
 
 		local onDeserialize = o.onDeserialize
 		o.onDeserialize = function(_in){
 			onDeserialize(_in)
-			local background = this.getBackground()
-			background.m.PlannedPerks <- []
-			if(this.getFlags().get("PlannedPerks")){
-				local len = _in.readU8()
-				for (local x = 0; x < len; x++){
-					background.m.PlannedPerks.push(_in.readString())
-				}
-			}
+			this.World.Perks.deserializeBrotherPerksWithFlag(this)
 		}
 	})
+
 	::mods_hookNewObject("ui/screens/character/character_screen", function(o){
 		//see the JS file for documentation about their function
 		o.onUpdatePlannedPerk <- function(_data){
 			//_data = _entity, _perk, _bool
 			local brother = this.Tactical.getEntityByID(_data[0])
-			brother.getBackground().updatePlannedPerk(_data[1], _data[2]);
+			this.World.Perks.updatePlannedPerk(brother, _data[1], _data[2]);
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
 		o.onClearPlannedPerks <- function(_data){
 			//_data = _entity, _perk, _bool
 			local brother = this.Tactical.getEntityByID(_data[0])
-			brother.getBackground().initPlannedPerks();
+			this.World.Perks.clearPlannedPerks(brother);
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
 		o.onSavePlannedPerks <- function(_data){
 			//_data = _entity, _perk, _bool
 			local brother = this.Tactical.getEntityByID(_data[0])
-			this.World.Perks.addPerkBuild(_data[1], brother.getBackground().getPlannedPerks())
+			this.World.Perks.addPerkBuild(_data[1], this.World.Perks.getPlannedPerks(brother))
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
 		o.onLoadAllPerkBuilds <- function(_data){
@@ -182,15 +130,15 @@ local modName = "mod_plan_perks"
 		o.onApplyPerkBuildFromName <- function(_data){
 			//data = brotherID, perkBuildID, overrideBool
 			local brother = this.Tactical.getEntityByID(_data[0])
-			brother.getBackground().setPlannedPerks(this.World.Perks.getPerkBuildCode(_data[1]), _data[2])
+			this.World.Perks.setPlannedPerks(brother, this.World.Perks.getPerkBuild(_data[1]), _data[2])
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
 		o.onApplyPerkBuildFromCode <- function(_data){
 			//data = brotherID, perkBuildID
 			local brother = this.Tactical.getEntityByID(_data[0])
-			local perkIDArray = this.World.Perks.stripNameFromCode(_data[1])
+			local perks = this.World.Perks.parseCode(_data[1]).Perks
 			//return error?
-			if(perkIDArray != null) brother.getBackground().setPlannedPerks(perkIDArray, _data[2])
+			if(perks != null) this.World.Perks.setPlannedPerks(brother, perks, _data[2])
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
 		o.onImportPerkBuildsFromCode <- function(_data){
@@ -201,15 +149,14 @@ local modName = "mod_plan_perks"
 		o.onExportCurrentPerks <- function(_data){
 			//data = brotherID
 			local brother = this.Tactical.getEntityByID(_data[0])
-			local dataAsDict = {placeholderName = brother.getBackground().getPlannedPerks()}
-			local parsedCode = this.World.Perks.exportPerkBuilds(dataAsDict)
+			local parsedCode = this.World.Perks.exportSinglePerkBuild("placeholderName", this.World.Perks.getPlannedPerks(brother))
 			return { parsedCode = parsedCode }
 
 		}
 		o.onExportSinglePerkBuildFromName <- function(_data){
 			//_data = perkBuildID
-			local dataAsDict = this.World.Perks.getPerkBuildAsDict(_data[0])
-			local parsedCode = this.World.Perks.exportPerkBuilds(dataAsDict)
+			local perks = this.World.Perks.getPerkBuild(_data[0])
+			local parsedCode = this.World.Perks.exportSinglePerkBuild(_data[0], this.World.Perks.getPerkBuild(_data[0]))
 			return  {parsedCode = parsedCode}
 		}
 		o.onExportAllPerkBuilds <- function(_data){
@@ -511,11 +458,6 @@ local modName = "mod_plan_perks"
 							text = "Switch to the next brother in your roster."
 						}
 					];		
-
-
-
-				
-				
 			}
 			return general_queryUIElementTooltipData( _entityId, _elementId, _elementOwner )
 		}

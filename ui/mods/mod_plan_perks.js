@@ -141,7 +141,6 @@ CharacterScreenPerksModule.prototype.destroyDIV = function ()
     this.mPerkCountPanel.remove();
     this.mPerkCountPanel = null;
 
-
     destroyDIV.call(this)
 };
 
@@ -185,10 +184,6 @@ CharacterScreenPerksModule.prototype.createPerkMenuButtons = function (_parentDi
 	}
 
 	var self = this;
-
-
-
-
     this.mPlanPerksButtonsPanel = $('<div class="mod-plan-perks-button-panel"/>');
     //this.mContainer.append(this.mParentPanel);
     $('.right-panel-header-module').append(this.mPlanPerksButtonsPanel)
@@ -237,30 +232,28 @@ CharacterScreenPerksModule.prototype.createPerkMenuButtons = function (_parentDi
     
     this.mPerkCountPanel = $('<div class="perk-count-panel"/>');
     _parentDiv.append(this.mPerkCountPanel);
-
-    this.mPerkCountContainer = $('<div class="perk-count-container"/>');
-    this.mPerkCountPanel.append(this.mPerkCountContainer);
     var rosterSizeImage = $('<img/>');
-    rosterSizeImage.attr('src', Path.GFX + 'ui/perks/perks_planning.png'); // ICON_DAMAGE_DEALT
-    this.mPerkCountContainer.append(rosterSizeImage);
+    rosterSizeImage.attr('src', Path.GFX + 'ui/perks/perks_planning.png');
+    this.mPerkCountPanel.append(rosterSizeImage);
     this.mPerkCountLabel = $('<div class="label text-font-small font-bold font-color-value"/>');
-    this.mPerkCountContainer.append(this.mPerkCountLabel);
-    this.mPerkCountContainer.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.perk-num-label" });
+    this.mPerkCountPanel.append(this.mPerkCountLabel);
+    this.mPerkCountPanel.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.perk-num-label" });
     
 };
 
 CharacterScreenPerksModule.prototype.updatePerkCountLabel = function ()
 {
-	var _perksMax = 10;
     this.mPerkCountLabel.html('' + this.getCurrentlyPlannedPerks());
 };
 
 CharacterScreenPerksModule.prototype.showSaveAndLoadPerksDialog = function()
 {
+	console.error("called showSaveAndLoadPerksDialog?")
     this.mDataSource.notifyBackendPopupDialogIsVisible(true);
     var self = this;
     this.mPopupDialog = $('.character-screen').createPopupDialog('Save and Load Perk Builds', null, null, 'save-and-load-perks-popup');
     this.mPopupDialog.addPopupDialogContent(this.createSaveAndLoadPerksDialogContent(this.mPopupDialog));
+    this.createScrollContainer()
     this.mPopupDialog.addPopupDialogButton('Cancel', 'l-cancel-button', function (_dialog)
    {
        _dialog.destroyPopupDialog();
@@ -385,6 +378,7 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
 {
 
     var result = $('<div class="save-and-load-perks-container"/>');
+    _dialog.append(result);
 	var self = this;
 
 	//SAVE PERKS DIV -------------------------------------------------------------------------------------------------------------------------------------------------
@@ -397,11 +391,6 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
 	var savePerksFromCodeContainer = $('<div class="save-perks-from-code-container"/>');
 	savePerksContainer.append(savePerksFromCodeContainer)
 	this.createCurrentCharacterContainer(savePerksContainer)
-
-
-
-	
-
 
 	var header = $('<div class="header has-no-sub-title"/>');
 	savePerksFromCodeContainer.append(header);
@@ -478,7 +467,8 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     //LOAD PERKS DIV -----------------------------------------------------------------------------------------------------------------------------------------
 
 	var loadPerksContainer = $('<div class="load-perks-container"/>');
-	result.append(loadPerksContainer)
+	this.mLoadPerksContainer = loadPerksContainer;
+	result.append(loadPerksContainer);
 
 	//header
 	header = $('<div class="header has-no-sub-title put-border-top"/>');
@@ -642,29 +632,21 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
 
 
 	//List
-	var listContainerLayout = $('<div class="l-list-container"/>');
-	loadPerksContainer.append(listContainerLayout);
-
-	var mylist = $('<div class="ui-control list"/>');
-
-	var scrollContainer = $('<div class="scroll-container"/>');
-	mylist.append(scrollContainer);
-
-	listContainerLayout.append(mylist);
-
-	 // NOTE: create scrollbar (must be after the list was appended to the DOM!)
-	 this.mListContainer = mylist
-	 this.mListScrollContainer = scrollContainer
-	this.mSortingFunction = "byAlphabetical"
-	this.mDataSource.notifyBackendLoadSavedPerks()
-
 
     return result;
-    
 };
+
+CharacterScreenPerksModule.prototype.createScrollContainer = function(){
+	var listContainerLayout = $('<div class="l-list-container"/>');
+	this.mLoadPerksContainer.append(listContainerLayout);
+	this.mListContainer = listContainerLayout.createList(2);	
+	this.mListScrollContainer = this.mListContainer.findListScrollContainer();
+	this.mSortingFunction = "byAlphabetical"
+	this.mDataSource.notifyBackendLoadSavedPerks()
+}
+
 CharacterScreenPerksModule.prototype.setupPerkBuildList = function(_datasource, _data){
 	if (this.mListScrollContainer === undefined){
-		console.error("mListScrollContainer undefined")
 		return
 	}
 	this.mListScrollContainer.empty()
@@ -726,21 +708,9 @@ CharacterScreenPerksModule.prototype.setupPerkBuildList = function(_datasource, 
 	}
 	
 	divResultList.sort(sortingFunctions[this.mSortingFunction]); 
-
-
 	for (var div in divResultList){
 		this.mListScrollContainer.append(divResultList[div].div);
 	}
-	this.mListContainer.aciScrollBar({
-         delta: 8,
-         lineDelay: 0,
-         lineTimer: 0,
-         pageDelay: 0,
-         pageTimer: 0,
-         bindKeyboard: false,
-         resizable: false,
-         smoothScroll: false
-     });
 }
 CharacterScreenPerksModule.prototype.addListEntryToPerkBuildList = function (_data)
 {

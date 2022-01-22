@@ -1,5 +1,5 @@
 local modName = "mod_plan_perks"
-::mods_registerMod(modName, 2.0)
+::mods_registerMod(modName, 3.0)
 ::mods_registerJS("mod_plan_perks.js");
 ::mods_registerCSS("mod_plan_perks.css");
 ::mods_queue(null, null, function()

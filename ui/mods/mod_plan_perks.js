@@ -1,4 +1,14 @@
 // OVERWRITTEN FUNCTIONS --------------------------------------------------------------------------------------------------------------------
+var PlannedPerkStatus = {
+    	Unplanned : 0,
+    	Planned : 1,
+    	Forbidden : 2
+}
+var PlannedPerkImages = {
+    	0 : 'ui/perks/selection_frame.png',
+    	1 : 'ui/perks/selection_frame_planning.png',
+    	2 : 'ui/perks/selection_frame_forbidden.png'
+}
 
 CharacterScreenPerksModule.prototype.attachEventHandler = function(_perk)
 {
@@ -8,7 +18,7 @@ CharacterScreenPerksModule.prototype.attachEventHandler = function(_perk)
 	{
 		var selectable = !_perk.Unlocked && self.isPerkUnlockable(_perk);
 
-		if (selectable === true && !_perk.Planned)
+		if (selectable === true && (_perk.Planned == PlannedPerkStatus.Unplanned))
 		{
 			var selectionLayer = $(this).find('.selection-image-layer:first');
 			selectionLayer.removeClass('display-none').addClass('display-block');
@@ -19,7 +29,7 @@ CharacterScreenPerksModule.prototype.attachEventHandler = function(_perk)
 	{
 		var selectable = !_perk.Unlocked && self.isPerkUnlockable(_perk);
 
-		if (selectable === true && !_perk.Planned)
+		if (selectable === true && (_perk.Planned == PlannedPerkStatus.Unplanned))
 		{
 			var selectionLayer = $(this).find('.selection-image-layer:first');
 			selectionLayer.removeClass('display-block').addClass('display-none');
@@ -30,6 +40,7 @@ CharacterScreenPerksModule.prototype.attachEventHandler = function(_perk)
 	{
 		if (event.which === 3)
         {
+        	
         	var callback = function (data)
 		    {
 		        if (data === undefined || data === null || typeof (data) !== 'object')
@@ -56,22 +67,24 @@ CharacterScreenPerksModule.prototype.attachEventHandler = function(_perk)
 		            }
 		        }
 		    }
+		    var ctrlPressed = (KeyModiferConstants.CtrlKey in _event && _event[KeyModiferConstants.CtrlKey] === true);
         	var selectionLayer = _perk.Container.find('.selection-image-layer:first');
-        	if (_perk.Planned === false){
-        		_perk.Planned = true;
-        		selectionLayer.attr('src', Path.GFX + 'ui/perks/selection_frame_planning.png');
-        		selectionLayer.removeClass('display-none').addClass('display-block');
-        		self.mDataSource.notifyBackendUpdatePlannedPerk(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], _perk.ID, 1, callback)
+        	var oldMode = _perk.Planned;
+        	var newMode = ctrlPressed ?  PlannedPerkStatus.Forbidden : PlannedPerkStatus.Planned
+        	var difference = newMode - oldMode
+        	if (difference == PlannedPerkStatus.Unplanned){
+        		_perk.Planned = PlannedPerkStatus.Unplanned;
+        		//selectionLayer.attr('src', Path.GFX + PlannedPerkImages[PlannedPerkStatus.Unplanned]);
+        		// if(!_perk.Unlocked){
+        		// 	selectionLayer.removeClass('display-block').addClass('display-none');
+        		// }
+        		self.mDataSource.notifyBackendUpdatePlannedPerk(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], _perk.ID, PlannedPerkStatus.Unplanned, callback)
         	}
         	else{
-        		_perk.Planned = false;
-        		selectionLayer.attr('src', Path.GFX + Asset.PERK_SELECTION_FRAME);
-        		if(!_perk.Unlocked){
-        			selectionLayer.removeClass('display-block').addClass('display-none');
-        		}
-        		self.mDataSource.notifyBackendUpdatePlannedPerk(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], _perk.ID, 0, callback)
-        	}
-        	
+        		_perk.Planned = newMode
+        		// selectionLayer.attr('src', Path.GFX + PlannedPerkImages[newMode]);
+        		self.mDataSource.notifyBackendUpdatePlannedPerk(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], _perk.ID, newMode, callback)
+        	}        	
         }
 		if (event.which === 1)
         {
@@ -101,7 +114,7 @@ CharacterScreenPerksModule.prototype.loadPerkTreesWithBrotherData = function (_b
 		if (CharacterScreenIdentifier.Perk.Key in _brother)
 		{
 		    self.initPerkTree(self.mPerkTree, _brother[CharacterScreenIdentifier.Perk.Key]);
-		    self.initPlannedPerksInTree(self.mPerkTree, _brother["PlannedPerks"]);
+		    self.initPlannedPerksInTree(self.mPerkTree, _brother);
 		    self.updatePerkCountLabel();
 		}
 
@@ -121,7 +134,6 @@ CharacterScreenPerksModule.prototype.create = function(_parentDiv)
 {
     create.call(this, _parentDiv);
     this.createPerkMenuButtons(_parentDiv)
-
 };
 var destroyDIV = CharacterScreenPerksModule.prototype.destroyDIV
 CharacterScreenPerksModule.prototype.destroyDIV = function ()
@@ -248,7 +260,6 @@ CharacterScreenPerksModule.prototype.updatePerkCountLabel = function ()
 
 CharacterScreenPerksModule.prototype.showSaveAndLoadPerksDialog = function()
 {
-	console.error("called showSaveAndLoadPerksDialog?")
     this.mDataSource.notifyBackendPopupDialogIsVisible(true);
     var self = this;
     this.mPopupDialog = $('.character-screen').createPopupDialog('Save and Load Perk Builds', null, null, 'save-and-load-perks-popup');
@@ -344,7 +355,7 @@ CharacterScreenPerksModule.prototype.fillPerkImageContainers = function ()
 				img.bindTooltip({ contentType: 'ui-perk', entityId: brother[CharacterScreenIdentifier.Entity.Id], perkId: perk.ID });
 				this.mUnlockedPerksImageContainer.append(img)
 			}
-			if (perk.Planned){
+			if (perk.Planned == PlannedPerkStatus.Planned){
 				this.mPlannedPerksImageContainer.append(perkImage)
 			}
 		}
@@ -744,8 +755,12 @@ CharacterScreenPerksModule.prototype.addListEntryToPerkBuildList = function (_da
 	var perkImageContainer = $('<div class="l-perk-image-container"/>');
 	entry.append(perkImageContainer);
 	var currentLeft = 0;
-	for (var x = 0; x < perkBuild.length; x++){
-		var perkID = perkBuild[x]
+	Object.keys(perkBuild).forEach(function(_key){
+		var perkID = _key
+		var isPlanned = perkBuild[_key]
+		if (isPlanned != PlannedPerkStatus.Planned){
+			return
+		}
 		var isUnlocked = isPerkUnlocked(brotherPerks, perkID)
 		var hasPerkInList = this.mPerksToImageDict[perkID].hasPerkInTree
 		var perkImage = $('<img class="perk-image"/>');
@@ -769,6 +784,10 @@ CharacterScreenPerksModule.prototype.addListEntryToPerkBuildList = function (_da
 
 		perkImageContainer.append(perkImage);
 		currentLeft += 3;
+
+	}.bind(this))
+	for (var x = 0; x < perkBuild.length; x++){
+
 	}
 
 	var buttonContainer = $('<div class="l-perk-button-container"/>');
@@ -839,14 +858,16 @@ CharacterScreenPerksModule.prototype.getCurrentlyPlannedPerks = function()
 		{
 
 			var perk = this.mPerkTree[row][i];
-			if (perk.Planned) numPlanned++
+			if (perk.Planned == PlannedPerkStatus.Planned) numPlanned++
 		}
 	}
 	return numPlanned
 }
 
 CharacterScreenPerksModule.prototype.checkForDelimiters = function(_string){
-	return (_string.search("°") ==  -1 && _string.search("~") ==  -1)
+	//search uses regex so escape dollar
+	//somehow doesn't update instantly for # oh well
+	return (_string.search("[°~$#]") ==  -1)
 }
 
 
@@ -888,24 +909,32 @@ CharacterScreenPerksModule.prototype.initPerkToImageDictLegends = function (_per
 		}
 	}
 }
-CharacterScreenPerksModule.prototype.initPlannedPerksInTree = function (_perkTree,  _plannedPerks){
+CharacterScreenPerksModule.prototype.initPlannedPerksInTree = function (_perkTree,  _brother){
+	var plannedPerks = _brother["PlannedPerks"]
+	var brotherID = _brother[CharacterScreenIdentifier.Entity.Id]
 	for (var row = 0; row < _perkTree.length; ++row)
 	{
 		for (var i = 0; i < _perkTree[row].length; ++i)
 		{
 
 			var perk = _perkTree[row][i];
-			if (perk.ID in _plannedPerks){
-				perk.Planned = true;
-				var selectionLayer = perk.Container.find('.selection-image-layer:first');
-				selectionLayer.attr('src', Path.GFX + 'ui/perks/selection_frame_planning.png');
+			var selectionLayer = perk.Container.find('.selection-image-layer:first');
+			if (perk.ID in plannedPerks){
+				perk.Planned = plannedPerks[perk.ID];
+				selectionLayer.attr('src', Path.GFX + PlannedPerkImages[perk.Planned]);
+				selectionLayer.css("z-index", "3");
+				selectionLayer.bindTooltip({ contentType: 'ui-perk', entityId: brotherID, perkId: perk.ID });
 				selectionLayer.removeClass('display-none').addClass('display-block');
-
 			}
 			else{
-				perk.Planned = false;
-				var selectionLayer = perk.Container.find('.selection-image-layer:first');
-				selectionLayer.attr('src', Path.GFX + Asset.PERK_SELECTION_FRAME);
+				perk.Planned = PlannedPerkStatus.Unplanned
+				selectionLayer.attr('src', Path.GFX + PlannedPerkImages[perk.Planned]);
+				selectionLayer.css("z-index", "1");
+				selectionLayer.removeClass('display-block').addClass('display-none');
+				selectionLayer.unbindTooltip();
+				if(perk.Unlocked){
+					selectionLayer.removeClass('display-none').addClass('display-block');
+				}
 			}
 			
 		}
@@ -991,9 +1020,9 @@ CharacterScreenDatasource.prototype.notifyBackendQueryForLegends = function(_cal
 }
 
 //update single planned perk for a specific brother after rightclicking
-CharacterScreenDatasource.prototype.notifyBackendUpdatePlannedPerk = function(_brother, _perkID, _bool, _callback)
+CharacterScreenDatasource.prototype.notifyBackendUpdatePlannedPerk = function(_brother, _perkID, _perkValue, _callback)
 {
-	SQ.call(this.mSQHandle, 'onUpdatePlannedPerk', [_brother, _perkID, _bool], _callback);
+	SQ.call(this.mSQHandle, 'onUpdatePlannedPerk', [_brother, _perkID, _perkValue], _callback);
 
 }
 
@@ -1083,90 +1112,3 @@ CharacterScreenDatasource.prototype.destroyPopupDialog = function()
 	popup.destroyPopupDialog()
    	this.notifyBackendPopupDialogIsVisible(false);
 }
-
-ConsoleScreen.prototype.setupEventHandler = function ()
-{
-	this.removeEventHandler();
-
-	var self = this;
-	$.each(this.mOptionsButtons, function(_key, _value) {
-		var type = _value.Type;
-		_value.Button.click(self, function(_event) {
-			self.toggleVisibleLogEntries(type);
-		});
-	});
-
-	this.mSwitchToOptionsButton.click(this, function(_event) {
-		var self = _event.data;
-		self.toggleOptionsBar();
-	});
-
-	this.mSwitchToJSButton.click(this, function(_event) {
-		var self = _event.data;
-		self.switchExecutionEnviroment(ConsoleScreenIdentifier.ExecutionEnviroment.JS);
-	});
-
-	this.mSwitchToSQButton.click(this, function(_event) {
-		var self = _event.data;
-		self.switchExecutionEnviroment(ConsoleScreenIdentifier.ExecutionEnviroment.SQ);
-	});
-
-	this.mCommandInput.on('keyup' + ConsoleScreenIdentifier.KeyEvent.Namespace, null, this, function(event) {
-		var self = event.data;
-
-		switch(event.which)
-		{
-			case KeyConstants.ArrowUp:
-			{
-				self.scrollHistoryUp();
-			} break;
-			case KeyConstants.ArrowDown:
-			{
-				self.scrollHistoryDown();
-			} break;
-			case KeyConstants.Return:
-			{
-				self.executeCommand($(this).val());
-			
-				/*
-				event.preventDefault();
-				event.stopPropagation();
-				*/
-			} break;
-		}
-	});
-
-	// bind global key event handler
-	$(document).on('keyup' + ConsoleScreenIdentifier.KeyEvent.Namespace, null, this, function(event) {
-		var self = event.data;
-		
-		switch(event.which)
-		{
-			case KeyConstants.PageUp:
-			{
-				self.toggleUp();
-
-				event.preventDefault();
-				event.stopPropagation();
-				break;
-			}
-			case KeyConstants.PageDown:
-			{
-				self.toggleDown();
-
-				event.preventDefault();
-				event.stopPropagation();
-				break;
-			}
-			case KeyConstants.F11:
-			{
-				self.toggle();
-
-				event.preventDefault();
-				event.stopPropagation();
-				break;
-			} 
-		}
-	});
-
-};

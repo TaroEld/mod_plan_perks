@@ -19,8 +19,8 @@ local modName = "mod_plan_perks"
 			local PlannedPerksDict = {}
 			//weird error
 			if (!("PlannedPerks" in _entity.m)) return PlannedPerksDict
-			foreach(key in _entity.m.PlannedPerks){
-				PlannedPerksDict[key] <- 1
+			foreach(key, value in _entity.m.PlannedPerks){
+				PlannedPerksDict[key] <- value
 			}
 			return PlannedPerksDict
 		}
@@ -88,7 +88,7 @@ local modName = "mod_plan_perks"
 
 
 	::mods_hookExactClass("entity/tactical/player", function(o){
-		o.m.PlannedPerks <- []
+		o.m.PlannedPerks <- {}
 
 		local onSerialize = o.onSerialize	
 		o.onSerialize = function(_out){
@@ -244,7 +244,7 @@ local modName = "mod_plan_perks"
 						{
 							id = 2,
 							type = "description",
-							text = "Save the planned perks of this character as a new build. Does not include unlocked perks that are not 'planned'. \n[color=" + this.Const.UI.Color.NegativeValue + "]Note: to unlock this button, you must enter a name, select at least one perk, and can't use the characters '°' or '~'.[/color]"
+							text = "Save the planned perks of this character as a new build. Does not include unlocked perks that are not 'planned'. \n[color=" + this.Const.UI.Color.NegativeValue + "]Note: to unlock this button, you must enter a name, select at least one perk, and can't use these characters: ° ~ $ #[/color]"
 						}
 					];
 

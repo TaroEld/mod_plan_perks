@@ -3,7 +3,8 @@ this.perk_manager <- {
 		PerkBuilds = {},
 		BetweenPerkDelimiter = "°",
 		BetweenBuildsDelimiter = "~",
-		BetweenNameAndPerksDelimiter = "$"
+		BetweenNameAndPerksDelimiter = "$",
+		WithinPerksDelimiter = "#",
 	},
 
 	function importPerkBuilds(_code){
@@ -25,8 +26,8 @@ this.perk_manager <- {
 	function exportSinglePerkBuild(_buildName, _perks){
 		local resultString = ""
 		resultString += _buildName + this.m.BetweenNameAndPerksDelimiter
-		foreach(perkID in _perks){
-			resultString += perkID + this.m.BetweenPerkDelimiter
+		foreach(perkID, perkValue in _perks){
+			resultString += perkID + this.m.WithinPerksDelimiter + perkValue +  this.m.BetweenPerkDelimiter 
 		}
 		return resultString
 	}
@@ -59,12 +60,20 @@ this.perk_manager <- {
 		if(_code.find(this.m.BetweenPerkDelimiter) == null){
 			return
 		}
+		local tableResult = {}
 		local result = split(_code, this.m.BetweenPerkDelimiter)
-		return result
+		foreach(perk in result){
+			local splitIntoNameAndValue = split(perk, this.m.WithinPerksDelimiter)
+			tableResult[splitIntoNameAndValue[0]] <- splitIntoNameAndValue[1]
+		}
+		return tableResult
 	}
 
 	function addPerkBuild(_name, _code){
-		this.m.PerkBuilds[_name] <- clone _code
+		this.m.PerkBuilds[_name] <- {}
+		foreach(key, value in _code){
+			this.m.PerkBuilds[_name][key] <- value
+		}
 	}
 
 	function removePerkBuild(_name){
@@ -72,12 +81,12 @@ this.perk_manager <- {
 	}
 
 	function getPerkBuild(_name){
-		return this.m.PerkBuilds[_name]
+		return clone this.m.PerkBuilds[_name]
 	}
 	
 	function getPerkBuildAsDict(_name){
 		local result = {}
-		result[_name] <- this.m.PerkBuilds[_name]
+		result[_name] <- this.getPerkBuild(_name)
 		return result
 	}
 	function getAllPerkBuilds(){
@@ -103,34 +112,30 @@ this.perk_manager <- {
 
 
 	function clearPlannedPerks(_brother){
-		_brother.m.PlannedPerks = []
+		_brother.m.PlannedPerks = {}
 	}
 
 	function getPlannedPerks(_brother){
 		return _brother.m.PlannedPerks
 	}
 
-	function updatePlannedPerk(_brother, _perkID, _add){
-		if (_add == 1){
-			if (_brother.m.PlannedPerks.find(_perkID) == null){
-				_brother.m.PlannedPerks.push(_perkID)
-			}
+	function updatePlannedPerk(_brother, _perkID, _plannedOrForbidden){
+		if (_plannedOrForbidden != 0){
+			_brother.m.PlannedPerks[_perkID] <- _plannedOrForbidden
 		}
 		else{
-			if (_brother.m.PlannedPerks.find(_perkID) != null){
-				_brother.m.PlannedPerks.remove(_brother.m.PlannedPerks.find(_perkID))
-			}
+			_brother.m.PlannedPerks.rawdelete(_perkID)
 		}
 	}
 
 	function setPlannedPerks(_brother, _perks, _override = true){
-		if (_override) _brother.m.PlannedPerks = _perks
-		else this.addToPlannedPerks(_brother, _perks)
+		if (_override) _brother.m.PlannedPerks = {}
+		this.addToPlannedPerks(_brother, _perks)
 	}
 
 	function addToPlannedPerks(_brother, _perks){
-		foreach (perkID in _perks){
-			this.updatePlannedPerk(_brother, perkID, 1)
+		foreach (perkID, perkvalue in _perks){
+			this.updatePlannedPerk(_brother, perkID, perkvalue)
 		}
 	}
 

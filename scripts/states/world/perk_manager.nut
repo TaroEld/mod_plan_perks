@@ -1,7 +1,7 @@
 this.perk_manager <- {
 	m = {
 		PerkBuilds = {},
-		BetweenPerkDelimiter = "°",
+		BetweenPerkDelimiter = "+",
 		BetweenBuildsDelimiter = "~",
 		BetweenNameAndPerksDelimiter = "$",
 		WithinPerksDelimiter = "#",
@@ -9,6 +9,7 @@ this.perk_manager <- {
 
 	function importPerkBuilds(_code){
 		local builds = split(_code, this.m.BetweenBuildsDelimiter)
+		this.logInfo(_code)
 		foreach(build in builds){
 			local result = this.parseCode(build)
 			if(result.Name != null && result.Perks != null) this.m.PerkBuilds[result.Name] <- result.Perks;
@@ -33,12 +34,15 @@ this.perk_manager <- {
 	}
 
 	function parseCode(_code){
+		this.logInfo("in parseCode ")
 		local result = {
 			Name = null,
 			Perks = null
 		}
 		result.Name = this.getNameFromCode(_code)
 		result.Perks = this.getPerksAsArrayFromCode(this.getCodeWithoutName(_code))
+		this.logInfo("result.Name " + result.Name)
+		this.logInfo("result.Perks " + result.Perks)
 		return result
 	}
 
@@ -101,12 +105,13 @@ this.perk_manager <- {
 	function deserializeWithFlags()
 	{
 		local flag = this.World.Flags.get("Perk_Manager")
-		if (typeof flag != "string" || flag.len() == 0) return
-		this.importPerkBuilds(flag);
+		if (typeof flag != "string" || flag.len() == 0){
+			this.MSU.PersistentDataManager.loadSettingForMod("PlanPerks", "PerkBuild")
+		}
+		else{
+			this.importPerkBuilds(flag);
+		}
 	}
-
-
-
 
 
 

@@ -2,7 +2,7 @@ local modName = "mod_plan_perks"
 ::mods_registerMod(modName, 4.0)
 ::mods_registerJS("mod_plan_perks.js");
 ::mods_registerCSS("mod_plan_perks.css");
-::mods_queue(null, null, function()
+::mods_queue(null, ">mod_msu", function()
 {
 	local gt = this.getroottable()
 

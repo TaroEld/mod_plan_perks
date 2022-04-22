@@ -1,14 +1,14 @@
 // OVERWRITTEN FUNCTIONS --------------------------------------------------------------------------------------------------------------------
 var PlannedPerkStatus = {
     	Unplanned : 1,
-    	Temporary : 2,
-    	Planned : 3,
+    	Planned : 2,
+    	Temporary : 3,
     	Forbidden : 4
 }
 var PlannedPerkImages = {
     	1 : 'ui/perks/planning_frame_empty.png',
-    	2 : 'ui/perks/planning_frame_orange.png',
-    	3 : 'ui/perks/planning_frame_planned.png',
+    	2 : 'ui/perks/planning_frame_planned.png',
+    	3 : 'ui/perks/planning_frame_unsure.png',
     	4 : 'ui/perks/planning_frame_forbidden.png'
 }
 
@@ -225,13 +225,11 @@ CharacterScreenPerksModule.prototype.showSaveAndLoadPerksDialog = function()
     this.createScrollContainer()
     this.mPopupDialog.addPopupDialogButton('Cancel', 'l-cancel-button', function (_dialog)
    {
-       _dialog.destroyPopupDialog();
        self.mDataSource.notifyBackendPopupDialogIsVisible(false);
+       self.mPopupDialog.destroyPopupDialog();
    })
 
 };
-
-
 
 CharacterScreenPerksModule.prototype.createCurrentCharacterContainer = function ()
 {
@@ -526,7 +524,7 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
 	    var contentContainer = self.mPopupDialog.findPopupDialogContentContainer();
 	    var inputFields = contentContainer.find('input');
 	    var overrideToggle = document.getElementById('override-toggle').checked
-        self.mDataSource.notifyBackendApplyPerkBuildFromCode(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], $(inputFields[1]).getInputText(), overrideToggle, callback);
+        self.mDataSource.notifyBackendApplyPerkBuildFromString(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], $(inputFields[1]).getInputText(), overrideToggle, callback);
     }, '', 1)
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.load-single-build-button" });
 
@@ -541,7 +539,7 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
 	    }
 	    var contentContainer = self.mPopupDialog.findPopupDialogContentContainer();
 	    var inputFields = contentContainer.find('input');
-        self.mDataSource.notifyBackendImportPerkBuildsFromCode($(inputFields[1]).getInputText(), callback);
+        self.mDataSource.notifyBackendImportPerkBuildsFromString($(inputFields[1]).getInputText(), callback);
     }, '', 1)
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.load-all-builds-button" });
 
@@ -688,6 +686,7 @@ CharacterScreenPerksModule.prototype.setupPerkBuildList = function(_datasource, 
 		this.mListScrollContainer.append(divResultList[div].div);
 	}
 }
+
 CharacterScreenPerksModule.prototype.addListEntryToPerkBuildList = function (_data)
 {
 	var self = this;
@@ -715,10 +714,10 @@ CharacterScreenPerksModule.prototype.addListEntryToPerkBuildList = function (_da
 	result.append(entry)
 	var nameContainer = $('<div class="l-perk-name-container"/>');
 	entry.append(nameContainer)
-	var name = $('<div class="name text-font-normal font-color-description perk-name">' + _data + '</div>');
+	var name = $('<div class="perk-name">' + _data + '</div>');
 	nameContainer.append(name);
-	var perkImageContainer = $('<div class="l-perk-image-container"/>');
-	entry.append(perkImageContainer);
+	var perkImagesContainer = $('<div class="l-perk-images-container"/>');
+	entry.append(perkImagesContainer);
 	var currentLeft = 0;
 	Object.keys(perkBuild).forEach(function(_key){
 		var perkID = _key
@@ -728,26 +727,27 @@ CharacterScreenPerksModule.prototype.addListEntryToPerkBuildList = function (_da
 		}
 		var isUnlocked = isPerkUnlocked(brotherPerks, perkID)
 		var hasPerkInList = this.mPerksToImageDict[perkID].hasPerkInTree
+		var perkImageContainer = $('<div class="perk-image-container"/>');
+		perkImagesContainer.append(perkImageContainer);
+
 		var perkImage = $('<img class="perk-image"/>');
-		var perkOverlayImage = $('<img class="perk-image-overlay"/>');
-		perkOverlayImage.attr('src', Path.GFX + 'ui/perks/missing-from-perks.png');
+		perkImageContainer.append(perkImage);
+		perkImage.attr('src', Path.GFX + this.mPerksToImageDict[perkID].locked);
 		if (isUnlocked === true){
 			perkImage.attr('src', Path.GFX + this.mPerksToImageDict[perkID].unlocked);
 			numPerks++
 		}
-		else{
-			perkImage.attr('src', Path.GFX + this.mPerksToImageDict[perkID].locked);
-		}
 		perkImage.unbindTooltip();
 		perkImage.bindTooltip({ contentType: 'ui-perk', entityId: brother[CharacterScreenIdentifier.Entity.Id], perkId: perkID });
+
+		var perkOverlayImage = $('<img class="perk-image-overlay display-none"/>');
+		perkImageContainer.append(perkOverlayImage);
+		perkOverlayImage.attr('src', Path.GFX + 'ui/perks/missing-from-perks.png');
 		if(hasPerkInList === false){
-			perkOverlayImage.css("left", currentLeft+'rem')
-			perkImageContainer.append(perkOverlayImage);
 			numMissingPerkInList++
+			perkOverlayImage.removeClass("display-none").addClass("display-block");
 		}
 
-
-		perkImageContainer.append(perkImage);
 		currentLeft += 3;
 
 	}.bind(this))
@@ -787,7 +787,7 @@ CharacterScreenPerksModule.prototype.addListEntryToPerkBuildList = function (_da
 	    	document.execCommand('copy');
 	    	$(inputFields[0]).setInputText("");
         }
-        self.mDataSource.notifyBackendExportSinglePerkBuildFromName(_data, callback);
+        self.mDataSource.notifyBackendStringifyPerkBuildFromName(_data, callback);
     }, '', 2)
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.list.copy-perks-button" });
 
@@ -1028,23 +1028,23 @@ CharacterScreenDatasource.prototype.notifyBackendApplyBuildFromName = function(_
 }
 
 //apply perk build to brother based on code
-CharacterScreenDatasource.prototype.notifyBackendApplyPerkBuildFromCode = function(_brother, _code, _override, _callback)
+CharacterScreenDatasource.prototype.notifyBackendApplyPerkBuildFromString = function(_brother, _code, _override, _callback)
 {
 
-	SQ.call(this.mSQHandle, 'onApplyPerkBuildFromCode', [_brother, _code, _override], _callback);
+	SQ.call(this.mSQHandle, 'onApplyPerkBuildFromString', [_brother, _code, _override], _callback);
 }
 
 //import perk builds to the list with name
-CharacterScreenDatasource.prototype.notifyBackendImportPerkBuildsFromCode = function(_code, _callback)
+CharacterScreenDatasource.prototype.notifyBackendImportPerkBuildsFromString = function(_code, _callback)
 {
 
-	SQ.call(this.mSQHandle, 'onImportPerkBuildsFromCode', [_code], _callback);
+	SQ.call(this.mSQHandle, 'onImportPerkBuildsFromString', [_code], _callback);
 }
 
 //export one perk build after pressing the export button
-CharacterScreenDatasource.prototype.notifyBackendExportSinglePerkBuildFromName = function(_perkBuildID, _callback)
+CharacterScreenDatasource.prototype.notifyBackendStringifyPerkBuildFromName = function(_perkBuildID, _callback)
 {
-	SQ.call(this.mSQHandle, 'onExportSinglePerkBuildFromName', [_perkBuildID], _callback);
+	SQ.call(this.mSQHandle, 'onStringifyPerkBuildFromName', [_perkBuildID], _callback);
 }
 
 //copy currently planned perks as code

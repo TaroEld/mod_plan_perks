@@ -133,15 +133,15 @@ local modName = "mod_plan_perks"
 			this.World.Perks.setPlannedPerks(brother, this.World.Perks.getPerkBuild(_data[1]), _data[2])
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
-		o.onApplyPerkBuildFromCode <- function(_data){
+		o.onApplyPerkBuildFromString <- function(_data){
 			//data = brotherID, perkBuildID
 			local brother = this.Tactical.getEntityByID(_data[0])
-			local perks = this.World.Perks.parseCode(_data[1]).Perks
+			local perks = this.World.Perks.parsePerkBuildString(_data[1]).Perks
 			//return error?
 			if(perks != null) this.World.Perks.setPlannedPerks(brother, perks, _data[2])
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
-		o.onImportPerkBuildsFromCode <- function(_data){
+		o.onImportPerkBuildsFromString <- function(_data){
 			//data = code containing string to parse with name and perk array
 			this.World.Perks.importPerkBuilds(_data[0])
 		}
@@ -149,14 +149,14 @@ local modName = "mod_plan_perks"
 		o.onExportCurrentPerks <- function(_data){
 			//data = brotherID
 			local brother = this.Tactical.getEntityByID(_data[0])
-			local parsedCode = this.World.Perks.exportSinglePerkBuild("placeholderName", this.World.Perks.getPlannedPerks(brother))
+			local parsedCode = this.World.Perks.stringifyPerks(this.World.Perks.getPlannedPerks(brother))
 			return { parsedCode = parsedCode }
 
 		}
-		o.onExportSinglePerkBuildFromName <- function(_data){
+		o.onStringifyPerkBuildFromName <- function(_data){
 			//_data = perkBuildID
 			local perks = this.World.Perks.getPerkBuild(_data[0])
-			local parsedCode = this.World.Perks.exportSinglePerkBuild(_data[0], this.World.Perks.getPerkBuild(_data[0]))
+			local parsedCode = this.World.Perks.stringifyPerkBuild(_data[0], this.World.Perks.getPerkBuild(_data[0]))
 			return  {parsedCode = parsedCode}
 		}
 		o.onExportAllPerkBuilds <- function(_data){

@@ -5,63 +5,75 @@ this.perk_manager <- {
 		BetweenBuildsDelimiter = "~",
 		BetweenNameAndPerksDelimiter = "$",
 		WithinPerksDelimiter = "#",
+		PlannedPerkStatus = {
+    		Unplanned = 1,
+    		Planned = 2,
+    		Temporary = 3,
+    		Forbidden = 4
+		}
 	},
 
-	function importPerkBuilds(_code){
-		local builds = split(_code, this.m.BetweenBuildsDelimiter)
+	function importPerkBuilds(_perkBuildsString){
+		local builds = split(_perkBuildsString, this.m.BetweenBuildsDelimiter)
 		foreach(build in builds){
-			local result = this.parseCode(build)
+			local result = this.parsePerkBuildString(build)
 			if(result.Name != null && result.Perks != null) this.m.PerkBuilds[result.Name] <- result.Perks;
 		}
 	}
-	function exportPerkBuilds(_builds){
+	function exportPerkBuilds(_perkBuildsTable){
 		local resultString = ""
-		foreach(buildName, perks in _builds){
-			resultString += this.exportSinglePerkBuild(buildName, perks)
+		foreach(buildName, perks in _perkBuildsTable){
+			resultString += this.stringifyPerkBuild(buildName, perks)
 			resultString += this.m.BetweenBuildsDelimiter
 		}
 		this.logInfo("Exported perk build(s). Resulting Code: " + resultString + " . Use 'Import Build(s)' to import these codes again.")
 		return resultString
 	}
-	function exportSinglePerkBuild(_buildName, _perks){
-		local resultString = ""
-		resultString += _buildName + this.m.BetweenNameAndPerksDelimiter
-		foreach(perkID, perkValue in _perks){
+
+	function stringifyPerkBuild(_buildName, _perksAsTable)
+	{
+		return _buildName + this.m.BetweenNameAndPerksDelimiter + this.stringifyPerks(_perksAsTable)
+	}
+
+	function stringifyPerks(_perksAsTable)
+	{
+		local resultString = "";
+		foreach(perkID, perkValue in _perksAsTable){
 			resultString += perkID + this.m.WithinPerksDelimiter + perkValue +  this.m.BetweenPerkDelimiter 
 		}
 		return resultString
 	}
 
-	function parseCode(_code){
+	function parsePerkBuildString(_perkBuildString){
 		local result = {
 			Name = null,
 			Perks = null
 		}
-		result.Name = this.getNameFromCode(_code)
-		result.Perks = this.getPerksAsArrayFromCode(this.getCodeWithoutName(_code))
+		local splitResult = this.splitNameAndPerks(_perkBuildString);
+		result.Name = splitResult.Name
+		result.Perks = this.getPerksAsTableFromString(splitResult.PerksAsString)
 		return result
 	}
 
-	function getNameFromCode(_code){
-		if(_code.find(this.m.BetweenNameAndPerksDelimiter) == null){
+	function splitNameAndPerks(_perkBuildString){
+		if(_perkBuildString.find(this.m.BetweenNameAndPerksDelimiter) == null){
 			return
 		}
-		local result = split(_code, this.m.BetweenNameAndPerksDelimiter)
-		return result[0]
-	}
-	function getCodeWithoutName(_code){
-		if(_code.find(this.m.BetweenNameAndPerksDelimiter) == null){
-			return _code
+		local splitResult = split(_perkBuildString, this.m.BetweenNameAndPerksDelimiter)
+		local result = 
+		{
+			Name = splitResult[0],
+			PerksAsString = splitResult[1]
 		}
-		local result = split(_code, this.m.BetweenNameAndPerksDelimiter)
-		return result[1]
+		return result
 	}
-	function getPerksAsArrayFromCode(_code){
-		if(_code.find(this.m.BetweenPerkDelimiter) == null){
+
+	function getPerksAsTableFromString(_perksString){
+		if(_perksString.find(this.m.BetweenPerkDelimiter) == null){
 			return
 		}
 		local tableResult = {}
-		local result = split(_code, this.m.BetweenPerkDelimiter)
+		local result = split(_perksString, this.m.BetweenPerkDelimiter)
 		foreach(perk in result){
 			local splitIntoNameAndValue = split(perk, this.m.WithinPerksDelimiter)
 			tableResult[splitIntoNameAndValue[0]] <- splitIntoNameAndValue[1]
@@ -69,9 +81,9 @@ this.perk_manager <- {
 		return tableResult
 	}
 
-	function addPerkBuild(_name, _code){
+	function addPerkBuild(_name, _perksTable){
 		this.m.PerkBuilds[_name] <- {}
-		foreach(key, value in _code){
+		foreach(key, value in _perksTable){
 			this.m.PerkBuilds[_name][key] <- value
 		}
 	}
@@ -89,6 +101,7 @@ this.perk_manager <- {
 		result[_name] <- this.getPerkBuild(_name)
 		return result
 	}
+
 	function getAllPerkBuilds(){
 		return this.m.PerkBuilds
 	}
@@ -105,23 +118,18 @@ this.perk_manager <- {
 		this.importPerkBuilds(flag);
 	}
 
-
-
-
-
-
-
 	function clearPlannedPerks(_brother){
-		_brother.m.PlannedPerks = {}
+		_brother.m.PlannedPerks = {};
 	}
 
 	function getPlannedPerks(_brother){
 		return _brother.m.PlannedPerks
 	}
 
-	function updatePlannedPerk(_brother, _perkID, _plannedOrForbidden){
-		if (_plannedOrForbidden != 0){
-			_brother.m.PlannedPerks[_perkID] <- _plannedOrForbidden
+	function updatePlannedPerk(_brother, _perkID, _plannedStatus)
+	{
+		if (_plannedStatus != this.m.PlannedPerkStatus.Unplanned){
+			_brother.m.PlannedPerks[_perkID] <- _plannedStatus
 		}
 		else{
 			_brother.m.PlannedPerks.rawdelete(_perkID)
@@ -141,10 +149,8 @@ this.perk_manager <- {
 
 	function serializeBrotherPerksWithFlag(_brother){
 		local perks = this.getPlannedPerks(_brother)
-		if(perks.len() == 0){
-			return
-		}
-		else _brother.getFlags().set("PlannedPerks", this.exportSinglePerkBuild("placeholdername", perks))		
+		if (perks.len() == 0) _brother.getFlags().set("PlannedPerks", false)	
+		else _brother.getFlags().set("PlannedPerks", this.stringifyPerks(perks))
 	}
 
 	function deserializeBrotherPerksWithFlag(_brother){
@@ -152,7 +158,7 @@ this.perk_manager <- {
 		if (!flag || flag == null){
 			return
 		}
-		local perks = this.parseCode(flag).Perks
+		local perks = this.getPerksAsTableFromString(flag);
 		this.setPlannedPerks(_brother, perks);
 	}
 

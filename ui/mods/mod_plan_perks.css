@@ -55,6 +55,7 @@
     margin: auto;
     padding-bottom: 0.1rem;
     z-index: 2;
+    opacity: 1 !important;
 }
 
 
@@ -378,7 +379,15 @@
     background-image: url("coui://gfx/ui/skin/perks-list-entry.png");
     background-size: cover;
     background-repeat: no-repeat;
+
+    display: flex;
+    align-items: center;
 } 
+
+.perk-build-list-container .ui-control.list .list-entry > *
+{
+    height: 100%;
+}
 
 .perk-build-list-container .ui-control.list .list-entry:hover,
 .perk-build-list-container .ui-control.list .list-entry.is-selected
@@ -390,66 +399,69 @@
 
 .perk-build-list-container .l-perk-name-container
 {
-    width: 65.0rem;
-    height: 90%;
-    position: relative;
-    float: left;
-    text-align: center;
-    vertical-align: middle;
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
 
+    border: 2px solid blue;
 }
 
 .perk-build-list-container .l-perk-name-container .perk-name
 {
-    position: relative; 
-    padding: auto;
+    flex: 6 1 auto;
+    border: 1px solid white;
+
+    font-weight: normal;
+    font-size  : 1.8rem;
+    font-style : normal;
+    font-family: 'FreeUniversal-Regular';
+    color: #bd9d71 !important;
 }
 
-.perk-build-list-container  .l-perk-image-container
+.perk-build-list-container  .l-perk-images-container
 {
-    width: 45.0rem;
-    height: 90%;
-    margin-top: 1.0rem;
-    position: relative;
-    float: left;
-    vertical-align: middle;
+    border: 2px solid red;
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
 }
-.perk-build-list-container .l-perk-image-container .perk-image
-{
 
+.perk-build-list-container .l-perk-images-container .perk-image-container
+{
     width: 3.0rem;
     height: 3.0rem;
-    position: relative;
-    vertical-align: middle;
 }
 
-.perk-build-list-container .l-perk-image-container .perk-image-overlay
+.perk-build-list-container .l-perk-images-container .perk-image-container .perk-image
+{
+    width: 3.0rem;
+    height: 3.0rem;
+    position: absolute;
+}
+
+.perk-build-list-container .l-perk-images-container .perk-image-container .perk-image-overlay
 {
     width: 3.0rem;
     height: 3.0rem;
     position: absolute;
     opacity: 0.2;
     z-index: 999;
-    vertical-align: middle;
 }
 
 .perk-build-list-container .l-perk-button-container
 {
-    width: 35.0rem;
-    height: 90%;
-    position: relative;
-    float: right;
+    max-width: 34.0rem;
+    border: 2px solid green;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .perk-build-list-container .l-perk-button-container  .l-button
 {
-    width: 10.0rem;
-    position: relative;
-    float: left;
+    width: 10.5rem;
     height: 100%;
     line-height: 3.0rem;
-    padding-right: 0.5rem;
-    padding-left: 0.5rem;
     text-align: center;
-    vertical-align: middle;
 }

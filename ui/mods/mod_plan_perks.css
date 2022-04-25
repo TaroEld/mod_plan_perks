@@ -43,7 +43,8 @@
     text-align: left;
 }
 
-.character-screen-container .perks-module .l-perk-container .planned-image-layer
+.character-screen-container .perks-module .l-perk-container .planned-image-layer,
+.character-screen-container .perks-module .l-perk-container .planned-image-overlay
 {
     top: 0;
     left: 0;
@@ -54,10 +55,17 @@
     position: absolute;
     margin: auto;
     padding-bottom: 0.1rem;
-    z-index: 2;
     opacity: 1 !important;
+    border-radius: 50%;
 }
-
+.character-screen-container .perks-module .l-perk-container .planned-image-layer
+{
+    z-index: 3;
+}
+.character-screen-container .perks-module .l-perk-container .planned-image-overlay
+{
+    z-index: 2;
+}
 
 .divider-vertical
 {

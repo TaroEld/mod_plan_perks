@@ -1,17 +1,11 @@
-// OVERWRITTEN FUNCTIONS --------------------------------------------------------------------------------------------------------------------
 var PlannedPerkStatus = {
     	Unplanned : 1,
     	Planned : 2,
     	Temporary : 3,
     	Forbidden : 4
 }
-var PlannedPerkImages = {
-    	1 : 'ui/perks/planning_frame_empty.png',
-    	2 : 'ui/perks/planning_frame_planned.png',
-    	3 : 'ui/perks/planning_frame_unsure.png',
-    	4 : 'ui/perks/planning_frame_forbidden.png'
+var PlannedPerkColorData = {
 }
-
 
 // HOOKED FUNCTIONS --------------------------------------------------------------------------------------------------------------------
 
@@ -43,9 +37,10 @@ CharacterScreenPerksModule.prototype.attachEventHandler = function(_perk)
 {
 	var self = this;
 	attachEventHandler.call(this, _perk);
-	var perkPlannedImage = $('<img class="planned-image-layer display-none"/>');
-	perkPlannedImage.attr('src', Path.GFX + Asset.PERK_SELECTION_FRAME);
+	var perkPlannedImage = $('<div class="planned-image-layer"/>');
 	_perk.Container.append(perkPlannedImage);
+	var perkPlannedOverlay = $('<div class="planned-image-overlay"/>');
+	_perk.Container.append(perkPlannedOverlay);
 	_perk.Container.mousedown(function (_event)
 	{
 		if (event.which === 3)
@@ -90,7 +85,7 @@ var create = CharacterScreenPerksModule.prototype.create
 CharacterScreenPerksModule.prototype.create = function(_parentDiv)
 {
     create.call(this, _parentDiv);
-    this.createPerkMenuButtons(_parentDiv)
+    this.createPerkMenuButtons(_parentDiv);
 };
 
 var destroyDIV = CharacterScreenPerksModule.prototype.destroyDIV
@@ -143,9 +138,6 @@ CharacterScreenPerksModule.prototype.hide = function ()
 //buttons to reset and open the popup, listeners
 CharacterScreenPerksModule.prototype.createPerkMenuButtons = function (_parentDiv)
 {
-
-
-
 	if(!("perks.saved-list-loaded" in this.mDataSource.mEventListener)){
 		this.mDataSource.mEventListener['perks.saved-list-loaded'] = [ ];
 		this.mDataSource.addListener('perks.saved-list-loaded', jQuery.proxy(this.setupPerkBuildList, this));
@@ -873,34 +865,60 @@ CharacterScreenPerksModule.prototype.initPerkToImageDictLegends = function (_per
 		}
 	}
 }
+
+CharacterScreenPerksModule.prototype.updatePlanPerksColorSettings = function()
+{
+	var asRGBA = function(_values)
+	{
+		return "rgba(" + _values + ")"
+	}
+	PlannedPerkColorData[2] = {
+		"RGB" : asRGBA(MSU.getSettingValue("mod_plan_perks", "planned_picker")),
+		"Overlay" : MSU.getSettingValue("mod_plan_perks", "planned_shadow")
+	}
+	PlannedPerkColorData[3] = {
+		"RGB" : asRGBA(MSU.getSettingValue("mod_plan_perks", "temporary_picker")),
+		"Overlay" : MSU.getSettingValue("mod_plan_perks", "temporary_shadow")
+	}
+	PlannedPerkColorData[4] = {
+		"RGB" : asRGBA(MSU.getSettingValue("mod_plan_perks", "forbidden_picker")),
+		"Overlay" : MSU.getSettingValue("mod_plan_perks", "forbidden_shadow")
+	}
+}
+
 CharacterScreenPerksModule.prototype.initPlannedPerksInTree = function (_perkTree,  _brother){
 	var plannedPerks = _brother["PlannedPerks"]
 	var brotherID = _brother[CharacterScreenIdentifier.Entity.Id]
+	this.updatePlanPerksColorSettings();
+	console.error(JSON.stringify(PlannedPerkColorData))
 	for (var row = 0; row < _perkTree.length; ++row)
 	{
 		for (var i = 0; i < _perkTree[row].length; ++i)
 		{
-
 			var perk = _perkTree[row][i];
 			var selectionLayer = perk.Container.find('.planned-image-layer:first');
+			var selectionOverlay = perk.Container.find('.planned-image-overlay:first');
 			if (perk.ID in plannedPerks){
 				perk.PlannedStatus = plannedPerks[perk.ID];
-				selectionLayer.attr('src', Path.GFX + PlannedPerkImages[perk.PlannedStatus]);
-				selectionLayer.css("z-index", "3");
+				selectionLayer.css("display", "block")
+				selectionLayer.css("border", "2px solid " + PlannedPerkColorData[perk.PlannedStatus].RGB)
+				if (PlannedPerkColorData[perk.PlannedStatus].Overlay === false)
+				{
+					selectionOverlay.css("display", "none")
+				}
+				else
+				{
+					selectionOverlay.css("display", "block")
+					selectionOverlay.css("background-color", PlannedPerkColorData[perk.PlannedStatus].RGB)
+				}
 				selectionLayer.bindTooltip({ contentType: 'ui-perk', entityId: brotherID, perkId: perk.ID });
-				selectionLayer.removeClass('display-none').addClass('display-block');
+				selectionLayer.css("display", "block")
 			}
 			else{
 				perk.PlannedStatus = PlannedPerkStatus.Unplanned
-				selectionLayer.attr('src', Path.GFX + PlannedPerkImages[perk.PlannedStatus]);
-				selectionLayer.css("z-index", "1");
-				selectionLayer.removeClass('display-block').addClass('display-none');
-				selectionLayer.unbindTooltip();
-				if(perk.Unlocked){
-					selectionLayer.removeClass('display-none').addClass('display-block');
-				}
+				selectionLayer.css("display", "none")
+				selectionOverlay.css("display", "none")
 			}
-			
 		}
 	}
 }
@@ -977,11 +995,6 @@ CharacterScreenDatasource.prototype.modPerkSwitchNextBrother = function(_without
 
 
 //BACKEND QUERIES --------------------------------------------------------------------------------------------------------------------------------------------------
-
-CharacterScreenDatasource.prototype.notifyBackendQueryForLegends = function(_callback)
-{
-	SQ.call(this.mSQHandle, 'onQueryLegends', [], _callback);
-}
 
 //update single planned perk for a specific brother after rightclicking
 CharacterScreenDatasource.prototype.notifyBackendUpdatePlannedPerk = function(_brother, _perkID, _perkValue, _callback)
@@ -1062,7 +1075,6 @@ CharacterScreenDatasource.prototype.notifyBackendExportAllPerkBuilds = function(
 //delete perk build from list
 CharacterScreenDatasource.prototype.notifyBackendDeletePerkBuild = function(_perkBuildID, _callback)
 {
-
 	SQ.call(this.mSQHandle, 'onDeletePerkBuild', [_perkBuildID], _callback);
 }
 CharacterScreenDatasource.prototype.notifyBackendQueryForLegends = function(_callback)

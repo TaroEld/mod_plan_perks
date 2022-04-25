@@ -2,10 +2,49 @@ local modName = "mod_plan_perks"
 ::mods_registerMod(modName, 4.1)
 ::mods_registerJS("mod_plan_perks.js");
 ::mods_registerCSS("mod_plan_perks.css");
-::mods_queue(null, null, function()
+::mods_queue(null, ">mod_msu", function()
 {
 	local gt = this.getroottable()
+	::PlanYourPerks <- {};
+	::PlanYourPerks.Mod <- ::MSU.Class.Mod(modName, "5.0.0", "Plan your Perks");
+	::PlanYourPerks.Colors <- {
+	}
+	::PlanYourPerks.Colors[2] <- {
+		RGB = null,
+		Overlay = null
+	},
+	::PlanYourPerks.Colors[3] <- {
+		RGB = null,
+		Overlay = null
+	},
+	::PlanYourPerks.Colors[4] <- {
+		RGB = null,
+		Overlay = null
+	},
 
+	::PlanYourPerks.UpdateColorsFromSettings <- function()
+	{
+		this.Colors[2].RGB = ::PlanYourPerks.Mod.ModSettings.getSetting("planned_picker").ValuesAsRGBA;
+		this.Colors[2].Overlay = ::PlanYourPerks.Mod.ModSettings.getSetting("planned_shadow").getValue();
+
+		this.Colors[3].RGB = ::PlanYourPerks.Mod.ModSettings.getSetting("temporary_picker").ValuesAsRGBA;
+		this.Colors[3].Overlay = ::PlanYourPerks.Mod.ModSettings.getSetting("temporary_shadow").getValue();
+
+		this.Colors[4].RGB = ::PlanYourPerks.Mod.ModSettings.getSetting("forbidden_picker").ValuesAsRGBA;
+		this.Colors[4].Overlay = ::PlanYourPerks.Mod.ModSettings.getSetting("forbidden_shadow").getValue();
+	}
+
+	local visualsPage = ::PlanYourPerks.Mod.ModSettings.addPage("Visuals");
+	visualsPage.addColorPickerSetting("planned_picker", "0,141,0,0.7", "Planned Color");
+	visualsPage.addBooleanSetting("planned_shadow", false, "Add a shadow")
+	visualsPage.addDivider("1");
+
+	visualsPage.addColorPickerSetting("temporary_picker", "0,255,0,0.7", "Temporary Color");
+	visualsPage.addBooleanSetting("temporary_shadow", false, "Add a shadow")
+	visualsPage.addDivider("2");
+
+	visualsPage.addColorPickerSetting("forbidden_picker", "255,0,0,0.7", "Forbidden Color");
+	visualsPage.addBooleanSetting("forbidden_shadow", true, "Add a shadow")
 
 	::mods_hookNewObject("ui/global/data_helper", function(o){
 		local convertEntityToUIData = o.convertEntityToUIData
@@ -105,6 +144,12 @@ local modName = "mod_plan_perks"
 
 	::mods_hookNewObject("ui/screens/character/character_screen", function(o){
 		//see the JS file for documentation about their function
+		o.onQueryColorData <- function(_data)
+		{
+			this.logInfo("arrives here")
+			::PlanYourPerks.UpdateColorsFromSettings();
+			return ::PlanYourPerks.Colors
+		}
 		o.onUpdatePlannedPerk <- function(_data){
 			//_data = _entity, _perk, _bool
 			local brother = this.Tactical.getEntityByID(_data[0])

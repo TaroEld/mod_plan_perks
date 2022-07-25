@@ -36,6 +36,9 @@
 		this.Colors[4].RGB = ::PlanYourPerks.Mod.ModSettings.getSetting("forbidden_picker").ValuesAsRGBA;
 		this.Colors[4].Overlay = ::PlanYourPerks.Mod.ModSettings.getSetting("forbidden_shadow").getValue();
 	}
+	local generalPage = ::PlanYourPerks.Mod.ModSettings.addPage("General");
+	local bbparser = generalPage.addBooleanSetting("BBParser", false, "Enable BBParser serialising");
+	bbparser.setDescription("If this setting is enabled, perk builds will be printed to your log to be read by the BBParser application. Allows you to save builds between campaigns.");
 
 	local visualsPage = ::PlanYourPerks.Mod.ModSettings.addPage("Visuals");
 	visualsPage.addColorPickerSetting("planned_picker", "0,141,0,0.7", "Planned Color");
@@ -68,26 +71,13 @@
 		}
 	})
 
-	::mods_hookNewObject("states/world_state", function(o){
-		o.m.PerkBuilds <- null; 
-		local onInitUI = o.onInitUI
-		o.onInitUI = function(){
-			onInitUI()
-			this.m.PerkBuilds = this.new("scripts/states/world/perk_manager");
-			this.World.Perks <- this.WeakTableRef(this.m.PerkBuilds);
-		}
-
-		local onSerialize = o.onSerialize	
-		o.onSerialize = function(_out){
-			this.World.Perks.serializeWithFlags()
-			onSerialize(_out)
-		}
-
-
+	::mods_hookNewObject("states/world_state", function(o)
+	{
 		local onDeserialize = o.onDeserialize
-		o.onDeserialize = function(_in){
-			onDeserialize(_in)
-			this.World.Perks.deserializeWithFlags()
+		o.onDeserialize = function(_in)
+		{
+			onDeserialize(_in);
+			::PlanYourPerks.PerkManager.deserializeBuilds();
 		}
 		
 		local helper_handleContextualKeyInput = o.helper_handleContextualKeyInput

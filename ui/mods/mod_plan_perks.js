@@ -113,10 +113,12 @@ var show = CharacterScreenPerksModule.prototype.show
 CharacterScreenPerksModule.prototype.show = function ()
 {
     show.call(this)
-    if (this.mPlanPerksButtonsPanel !== undefined && this.mPlanPerksButtonsPanel !== null){
+    if (this.mPlanPerksButtonsPanel !== undefined && this.mPlanPerksButtonsPanel !== null)
+    {
     	this.mPlanPerksButtonsPanel.removeClass('display-none').addClass('display-block');
     }
-    if (this.mPerkCountPanel !== undefined && this.mPerkCountPanel !== null){
+    if (this.mPerkCountPanel !== undefined && this.mPerkCountPanel !== null)
+    {
     	this.mPerkCountPanel.removeClass('display-none').addClass('display-block');
     }
 };
@@ -124,11 +126,14 @@ CharacterScreenPerksModule.prototype.show = function ()
 var hide = CharacterScreenPerksModule.prototype.hide
 CharacterScreenPerksModule.prototype.hide = function ()
 {
-    hide.call(this)
-    if (this.mPlanPerksButtonsPanel !== undefined && this.mPlanPerksButtonsPanel !== null){
+    hide.call(this);
+    if (this.mPlanPerksButtonsPanel !== undefined && this.mPlanPerksButtonsPanel !== null)
+    {
     	this.mPlanPerksButtonsPanel.removeClass('display-block').addClass('display-none');
     }
-    if (this.mPerkCountPanel !== undefined && this.mPerkCountPanel !== null){
+
+    if (this.mPerkCountPanel !== undefined && this.mPerkCountPanel !== null)
+    {
     	this.mPerkCountPanel.removeClass('display-block').addClass('display-none');
     }
 };
@@ -138,7 +143,8 @@ CharacterScreenPerksModule.prototype.hide = function ()
 //buttons to reset and open the popup, listeners
 CharacterScreenPerksModule.prototype.createPerkMenuButtons = function (_parentDiv)
 {
-	if(!("perks.saved-list-loaded" in this.mDataSource.mEventListener)){
+	if(!("perks.saved-list-loaded" in this.mDataSource.mEventListener))
+	{
 		this.mDataSource.mEventListener['perks.saved-list-loaded'] = [ ];
 		this.mDataSource.addListener('perks.saved-list-loaded', jQuery.proxy(this.setupPerkBuildList, this));
 		this.mDataSource.addListener(CharacterScreenDatasourceIdentifier.Brother.Selected, jQuery.proxy(this.updateDynamicContent, this));
@@ -293,7 +299,6 @@ CharacterScreenPerksModule.prototype.fillPerkImageContainers = function ()
 	{
 		for (var i = 0; i < this.mPerkTree[row].length; ++i)
 		{
-
 			var perk = this.mPerkTree[row][i];
 			var perkImage = $('<img class="perk-image"/>');
 			perkImage.attr('src', Path.GFX + this.mPerksToImageDict[perk.ID].locked);
@@ -338,8 +343,6 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     var result = $('<div class="save-and-load-perk-popup-content-container"/>');
     _dialog.append(result);
 	var self = this;
-
-
 
 	var topDivider = $('<div class="divider-horizontal above-save-perk"/>');
 	result.append(topDivider)
@@ -404,8 +407,7 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     buttonLayout = $('<div class="l-button"/>');
     savePerksFromCodeContainer.append(buttonLayout)
 	button = buttonLayout.createTextButton("Export Build", function ()
-    {
-	    
+    {  
     	var callback = function (data)
         {
         	var code = data.parsedCode
@@ -424,8 +426,7 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     buttonLayout = $('<div class="l-button"/>');
     savePerksFromCodeContainer.append(buttonLayout)
 	button = buttonLayout.createTextButton("Export All Builds", function ()
-    {
-	    
+    {  
     	var callback = function (data)
         {
         	var code = data.parsedCode
@@ -441,9 +442,6 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     }, '', 1)
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.copy-all-perks-button" });
     
-
-
-
 
     var midDivider = $('<div class="divider-horizontal between-perk"/>');
     result.append(midDivider)
@@ -493,7 +491,6 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     {
 		var callback = function (data)
 	    {
-
 	        // check if we have an error
 	        if (ErrorCode.Key in data)
 	        {
@@ -790,7 +787,7 @@ CharacterScreenPerksModule.prototype.addListEntryToPerkBuildList = function (_da
     {
 		var callback = function (data)
 	    {
-	    	self.mDataSource.notifyBackendLoadSavedPerks()
+	    	self.mDataSource.notifyBackendLoadSavedPerks();
 	    }
         self.mDataSource.notifyBackendDeletePerkBuild(_data, callback);
     }, '', 2)
@@ -890,7 +887,6 @@ CharacterScreenPerksModule.prototype.initPlannedPerksInTree = function (_perkTre
 	var plannedPerks = _brother["PlannedPerks"]
 	var brotherID = _brother[CharacterScreenIdentifier.Entity.Id]
 	this.updatePlanPerksColorSettings();
-	console.error(JSON.stringify(PlannedPerkColorData))
 	for (var row = 0; row < _perkTree.length; ++row)
 	{
 		for (var i = 0; i < _perkTree[row].length; ++i)
@@ -1000,15 +996,12 @@ CharacterScreenDatasource.prototype.modPerkSwitchNextBrother = function(_without
 CharacterScreenDatasource.prototype.notifyBackendUpdatePlannedPerk = function(_brother, _perkID, _perkValue, _callback)
 {
 	SQ.call(this.mSQHandle, 'onUpdatePlannedPerk', [_brother, _perkID, _perkValue], _callback);
-
 }
 
 //clear all planned perks for specific brother
 CharacterScreenDatasource.prototype.notifyBackendClearPerksButtonClicked = function(_brother, _callback)
 {
-
 	SQ.call(this.mSQHandle, 'onClearPlannedPerks', [_brother], _callback);
-
 }
 
 //save planned perks of a brother as a new perk build
@@ -1063,13 +1056,11 @@ CharacterScreenDatasource.prototype.notifyBackendStringifyPerkBuildFromName = fu
 //copy currently planned perks as code
 CharacterScreenDatasource.prototype.notifyBackendExportCurrentPerks = function(_brother, _callback)
 {
-
 	SQ.call(this.mSQHandle, 'onExportCurrentPerks', [_brother], _callback);
 }
 //export all perk builds in list after pressing the all builds button
 CharacterScreenDatasource.prototype.notifyBackendExportAllPerkBuilds = function(_callback)
 {
-
 	SQ.call(this.mSQHandle, 'onExportAllPerkBuilds', [], _callback);
 }
 //delete perk build from list

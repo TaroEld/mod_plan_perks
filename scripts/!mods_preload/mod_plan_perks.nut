@@ -89,10 +89,10 @@
 				{
 				case 41:
 					this.toggleCharacterScreen(_key);
-					return false
+					return false;
 				}
 			}
-			return helper_handleContextualKeyInput(_key)
+			return helper_handleContextualKeyInput(_key);
 		}
 		
 		o.toggleCharacterScreen <- function(_key = null)
@@ -124,14 +124,14 @@
 
 		local onSerialize = o.onSerialize	
 		o.onSerialize = function(_out){
-			this.World.Perks.serializeBrotherPerksWithFlag(this)
-			onSerialize(_out)
+			::PlanYourPerks.PerkManager.serializeBrotherPerksWithFlag(this);
+			onSerialize(_out);
 		}
 
 		local onDeserialize = o.onDeserialize
 		o.onDeserialize = function(_in){
-			onDeserialize(_in)
-			this.World.Perks.deserializeBrotherPerksWithFlag(this)
+			onDeserialize(_in);
+			::PlanYourPerks.PerkManager.deserializeBrotherPerksWithFlag(this);
 		}
 	})
 
@@ -139,74 +139,102 @@
 		//see the JS file for documentation about their function
 		o.onQueryColorData <- function(_data)
 		{
-			this.logInfo("arrives here")
 			::PlanYourPerks.UpdateColorsFromSettings();
 			return ::PlanYourPerks.Colors
 		}
-		o.onUpdatePlannedPerk <- function(_data){
+
+		o.onUpdatePlannedPerk <- function(_data)
+		{
 			//_data = _entity, _perk, _bool
 			local brother = this.Tactical.getEntityByID(_data[0])
-			this.World.Perks.updatePlannedPerk(brother, _data[1], _data[2]);
+			::PlanYourPerks.PerkManager.updatePlannedPerk(brother, _data[1], _data[2]);
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
-		o.onClearPlannedPerks <- function(_data){
+
+		o.onClearPlannedPerks <- function(_data)
+		{
 			//_data = _entity, _perk, _bool
 			local brother = this.Tactical.getEntityByID(_data[0])
-			this.World.Perks.clearPlannedPerks(brother);
+			::PlanYourPerks.PerkManager.clearPlannedPerks(brother);
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
-		o.onSavePlannedPerks <- function(_data){
+
+		o.onSavePlannedPerks <- function(_data)
+		{
 			//_data = _entity, _perk, _bool
-			local brother = this.Tactical.getEntityByID(_data[0])
-			this.World.Perks.addPerkBuild(_data[1], this.World.Perks.getPlannedPerks(brother))
+			local brother = this.Tactical.getEntityByID(_data[0]);
+			::PlanYourPerks.PerkManager.addPerkBuild(_data[1], ::PlanYourPerks.PerkManager.getPlannedPerks(brother));
+			::PlanYourPerks.PerkManager.serializeBuilds();
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
-		o.onLoadAllPerkBuilds <- function(_data){
+
+		o.onLoadAllPerkBuilds <- function(_data)
+		{
 			//data = null
-			return {perks = this.World.Perks.getAllPerkBuilds()}
+			return {perks = ::PlanYourPerks.PerkManager.getAllPerkBuilds()}
 		}
-		o.onApplyPerkBuildFromName <- function(_data){
+
+		o.onApplyPerkBuildFromName <- function(_data)
+		{
 			//data = brotherID, perkBuildID, overrideBool
 			local brother = this.Tactical.getEntityByID(_data[0])
-			this.World.Perks.setPlannedPerks(brother, this.World.Perks.getPerkBuild(_data[1]), _data[2])
+			::PlanYourPerks.PerkManager.setPlannedPerks(brother, ::PlanYourPerks.PerkManager.getPerkBuild(_data[1]), _data[2])
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
-		o.onApplyPerkBuildFromString <- function(_data){
+
+		o.onApplyPerkBuildFromString <- function(_data)
+		{
 			//data = brotherID, perkBuildID
 			local brother = this.Tactical.getEntityByID(_data[0])
-			local perks = this.World.Perks.parsePerkBuildString(_data[1]).Perks
+			local perks = ::PlanYourPerks.PerkManager.parsePerkBuildString(_data[1]).Perks
 			//return error?
-			if(perks != null) this.World.Perks.setPlannedPerks(brother, perks, _data[2])
+			if(perks != null) ::PlanYourPerks.PerkManager.setPlannedPerks(brother, perks, _data[2])
 			return this.UIDataHelper.convertEntityToUIData(brother, null);
 		}
-		o.onImportPerkBuildsFromString <- function(_data){
+
+		o.onImportPerkBuildsFromString <- function(_data)
+		{
 			//data = code containing string to parse with name and perk array
-			this.World.Perks.importPerkBuilds(_data[0])
+			::PlanYourPerks.PerkManager.importPerkBuilds(_data[0])
 		}
 
-		o.onExportCurrentPerks <- function(_data){
+		o.onExportCurrentPerks <- function(_data)
+		{
 			//data = brotherID
 			local brother = this.Tactical.getEntityByID(_data[0])
-			local parsedCode = this.World.Perks.stringifyPerks(this.World.Perks.getPlannedPerks(brother))
+			local parsedCode = ::PlanYourPerks.PerkManager.stringifyPerks(::PlanYourPerks.PerkManager.getPlannedPerks(brother))
 			return { parsedCode = parsedCode }
-
 		}
-		o.onStringifyPerkBuildFromName <- function(_data){
+
+		o.onStringifyPerkBuildFromName <- function(_data)
+		{
 			//_data = perkBuildID
-			local perks = this.World.Perks.getPerkBuild(_data[0])
-			local parsedCode = this.World.Perks.stringifyPerkBuild(_data[0], this.World.Perks.getPerkBuild(_data[0]))
+			local perks = ::PlanYourPerks.PerkManager.getPerkBuild(_data[0])
+			local parsedCode = ::PlanYourPerks.PerkManager.stringifyPerkBuild(_data[0], ::PlanYourPerks.PerkManager.getPerkBuild(_data[0]))
 			return  {parsedCode = parsedCode}
 		}
-		o.onExportAllPerkBuilds <- function(_data){
+
+		o.onExportAllPerkBuilds <- function(_data)
+		{
 			//data = null
-			local parsedCode = this.World.Perks.exportPerkBuilds(this.World.Perks.getAllPerkBuilds())
+			local parsedCode = ::PlanYourPerks.PerkManager.exportPerkBuilds();
 			return { parsedCode = parsedCode }
 		}
-		o.onDeletePerkBuild <- function(_data){
-			//data = perkBuildID
-			this.World.Perks.removePerkBuild(_data[0])
+
+		o.onExportAllPerkBuildsAfterChange <- function()
+		{
+			::PlanYourPerks.PerkManager.serializeBuilds();
 		}
-		o.onQueryLegends <- function(_data){
+
+		o.onDeletePerkBuild <- function(_data)
+		{
+			//data = perkBuildID
+			::PlanYourPerks.PerkManager.removePerkBuild(_data[0]);
+			::PlanYourPerks.PerkManager.serializeBuilds();
+		}
+
+		o.onQueryLegends <- function(_data)
+		{
 			//data = null
 			local hasLegends = ("LegendsMod" in this.getroottable())
 			if (hasLegends){

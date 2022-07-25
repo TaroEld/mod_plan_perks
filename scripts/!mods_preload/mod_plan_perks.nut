@@ -1,12 +1,15 @@
-local modName = "mod_plan_perks"
-::mods_registerMod(modName, 4.1)
-::mods_registerJS("mod_plan_perks.js");
-::mods_registerCSS("mod_plan_perks.css");
-::mods_queue(null, ">mod_msu", function()
+::PlanYourPerks <- {
+	ID = "mod_plan_perks",
+	Name = "Plan your Perks",
+	Version = "5.0.0"
+};
+::mods_registerMod(::PlanYourPerks.ID, ::PlanYourPerks.Version);
+::mods_queue(null, "mod_msu", function()
 {
-	local gt = this.getroottable()
-	::PlanYourPerks <- {};
-	::PlanYourPerks.Mod <- ::MSU.Class.Mod(modName, "5.0.0", "Plan your Perks");
+	::mods_registerJS("mod_plan_perks.js");
+	::mods_registerCSS("mod_plan_perks.css");
+	::PlanYourPerks.Mod <- ::MSU.Class.Mod(::PlanYourPerks.ID, ::PlanYourPerks.Version, ::PlanYourPerks.Name);
+	::PlanYourPerks.PerkManager <- this.new("scripts/states/world/perk_manager");
 	::PlanYourPerks.Colors <- {
 	}
 	::PlanYourPerks.Colors[2] <- {

@@ -10,32 +10,7 @@
 	::mods_registerCSS("mod_plan_perks.css");
 	::PlanYourPerks.Mod <- ::MSU.Class.Mod(::PlanYourPerks.ID, ::PlanYourPerks.Version, ::PlanYourPerks.Name);
 	::PlanYourPerks.PerkManager <- this.new("scripts/states/world/perk_manager");
-	::PlanYourPerks.Colors <- {
-	}
-	::PlanYourPerks.Colors[2] <- {
-		RGB = null,
-		Overlay = null
-	},
-	::PlanYourPerks.Colors[3] <- {
-		RGB = null,
-		Overlay = null
-	},
-	::PlanYourPerks.Colors[4] <- {
-		RGB = null,
-		Overlay = null
-	},
 
-	::PlanYourPerks.UpdateColorsFromSettings <- function()
-	{
-		this.Colors[2].RGB = ::PlanYourPerks.Mod.ModSettings.getSetting("planned_picker").ValuesAsRGBA;
-		this.Colors[2].Overlay = ::PlanYourPerks.Mod.ModSettings.getSetting("planned_shadow").getValue();
-
-		this.Colors[3].RGB = ::PlanYourPerks.Mod.ModSettings.getSetting("temporary_picker").ValuesAsRGBA;
-		this.Colors[3].Overlay = ::PlanYourPerks.Mod.ModSettings.getSetting("temporary_shadow").getValue();
-
-		this.Colors[4].RGB = ::PlanYourPerks.Mod.ModSettings.getSetting("forbidden_picker").ValuesAsRGBA;
-		this.Colors[4].Overlay = ::PlanYourPerks.Mod.ModSettings.getSetting("forbidden_shadow").getValue();
-	}
 	local generalPage = ::PlanYourPerks.Mod.ModSettings.addPage("General");
 	local bbparser = generalPage.addBooleanSetting("BBParser", false, "Enable BBParser serialising");
 	bbparser.setDescription("If this setting is enabled, perk builds will be printed to your log to be read by the BBParser application. Allows you to save builds between campaigns.");
@@ -137,11 +112,6 @@
 
 	::mods_hookNewObject("ui/screens/character/character_screen", function(o){
 		//see the JS file for documentation about their function
-		o.onQueryColorData <- function(_data)
-		{
-			::PlanYourPerks.UpdateColorsFromSettings();
-			return ::PlanYourPerks.Colors
-		}
 
 		o.onUpdatePlannedPerk <- function(_data)
 		{

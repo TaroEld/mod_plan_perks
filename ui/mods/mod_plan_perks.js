@@ -64,7 +64,7 @@ CharacterScreenPerksModule.prototype.attachEventHandler = function(_perk)
 		            // find the brother and update him
 		            if (CharacterScreenIdentifier.Entity.Id in data)
 		            {
-		                self.mDataSource.updateBrother(data);
+		                self.updatePlannedPerkInTree(_perk, data);
 		            }
 		            else
 		            {
@@ -883,38 +883,43 @@ CharacterScreenPerksModule.prototype.updatePlanPerksColorSettings = function()
 	}
 }
 
-CharacterScreenPerksModule.prototype.initPlannedPerksInTree = function (_perkTree,  _brother){
-	var plannedPerks = _brother["PlannedPerks"]
+CharacterScreenPerksModule.prototype.updatePlannedPerkInTree = function (_perk, _brother)
+{
+	var selectionLayer = _perk.Container.find('.planned-image-layer:first');
+	var selectionOverlay = _perk.Container.find('.planned-image-overlay:first');
 	var brotherID = _brother[CharacterScreenIdentifier.Entity.Id]
+	var plannedPerks = _brother["PlannedPerks"]
+	if (_perk.ID in plannedPerks){
+		_perk.PlannedStatus = plannedPerks[_perk.ID];
+		selectionLayer.css("display", "block")
+		selectionLayer.css("border", "2px solid " + ModPlanPerks.PlannedPerkColorData[_perk.PlannedStatus].RGB)
+		if (ModPlanPerks.PlannedPerkColorData[_perk.PlannedStatus].Overlay === false)
+		{
+			selectionOverlay.css("display", "none")
+		}
+		else
+		{
+			selectionOverlay.css("display", "block")
+			selectionOverlay.css("background-color", ModPlanPerks.PlannedPerkColorData[_perk.PlannedStatus].RGB)
+		}
+		selectionLayer.bindTooltip({ contentType: 'ui-_perk', entityId: brotherID, perkId: _perk.ID });
+		selectionLayer.css("display", "block")
+	}
+	else{
+		_perk.PlannedStatus = ModPlanPerks.PlannedPerkStatus.Unplanned
+		selectionLayer.css("display", "none")
+		selectionOverlay.css("display", "none")
+	}
+}
+
+CharacterScreenPerksModule.prototype.initPlannedPerksInTree = function (_perkTree,  _brother){
 	this.updatePlanPerksColorSettings();
 	for (var row = 0; row < _perkTree.length; ++row)
 	{
 		for (var i = 0; i < _perkTree[row].length; ++i)
 		{
 			var perk = _perkTree[row][i];
-			var selectionLayer = perk.Container.find('.planned-image-layer:first');
-			var selectionOverlay = perk.Container.find('.planned-image-overlay:first');
-			if (perk.ID in plannedPerks){
-				perk.PlannedStatus = plannedPerks[perk.ID];
-				selectionLayer.css("display", "block")
-				selectionLayer.css("border", "2px solid " + PlannedPerkColorData[perk.PlannedStatus].RGB)
-				if (PlannedPerkColorData[perk.PlannedStatus].Overlay === false)
-				{
-					selectionOverlay.css("display", "none")
-				}
-				else
-				{
-					selectionOverlay.css("display", "block")
-					selectionOverlay.css("background-color", PlannedPerkColorData[perk.PlannedStatus].RGB)
-				}
-				selectionLayer.bindTooltip({ contentType: 'ui-perk', entityId: brotherID, perkId: perk.ID });
-				selectionLayer.css("display", "block")
-			}
-			else{
-				perk.PlannedStatus = PlannedPerkStatus.Unplanned
-				selectionLayer.css("display", "none")
-				selectionOverlay.css("display", "none")
-			}
+			this.updatePlannedPerkInTree(perk, _brother);
 		}
 	}
 }

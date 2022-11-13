@@ -15,6 +15,8 @@
 	local bbparser = generalPage.addBooleanSetting("BBParser", false, "Enable BBParser serialising");
 	bbparser.setDescription("If this setting is enabled, perk builds will be printed to your log to be read by the BBParser application. Allows you to save builds between campaigns.");
 
+	generalPage.addBooleanSetting("disable_other_states", false, "Have only one possible state.")
+
 	local visualsPage = ::PlanYourPerks.Mod.ModSettings.addPage("Visuals");
 	visualsPage.addColorPickerSetting("planned_picker", "0,141,0,0.7", "Planned Color");
 	visualsPage.addBooleanSetting("planned_shadow", false, "Add a shadow")

@@ -79,8 +79,11 @@ CharacterScreenPerksModule.prototype.attachEventHandler = function(_perk)
 		        }
 		    }
 		    var ctrlPressed = (KeyModiferConstants.CtrlKey in _event && _event[KeyModiferConstants.CtrlKey] === true);
+		    var maxToggle = ModPlanPerks.PlannedPerkMaxToggles;
+		    if (MSU.getSettingValue("mod_plan_perks", "disable_other_states"))
+		    	maxToggle = 2;
         	var newMode = _perk.PlannedStatus + 1
-        	if(newMode > 4 || ctrlPressed) newMode = 1;
+        	if (newMode > maxToggle || ctrlPressed) newMode = 1;
         	_perk.PlannedStatus = newMode;
         	self.mDataSource.notifyBackendUpdatePlannedPerk(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], _perk.ID, _perk.PlannedStatus, callback)       	
         }

@@ -1,11 +1,17 @@
-var PlannedPerkStatus = {
+var ModPlanPerks = {
+	PlannedPerkStatus : {
     	Unplanned : 1,
     	Planned : 2,
     	Temporary : 3,
     	Forbidden : 4
+	},
+	PlannedPerkColorData : {
+
+	},
+	PlannedPerkMaxToggles : 4
 }
-var PlannedPerkColorData = {
-}
+
+
 
 // HOOKED FUNCTIONS --------------------------------------------------------------------------------------------------------------------
 
@@ -311,7 +317,7 @@ CharacterScreenPerksModule.prototype.fillPerkImageContainers = function ()
 				img.bindTooltip({ contentType: 'ui-perk', entityId: brother[CharacterScreenIdentifier.Entity.Id], perkId: perk.ID });
 				this.mUnlockedPerksImageContainer.append(img)
 			}
-			if (perk.PlannedStatus == PlannedPerkStatus.Planned){
+			if (perk.PlannedStatus == ModPlanPerks.PlannedPerkStatus.Planned){
 				this.mPlannedPerksImageContainer.append(perkImage)
 			}
 		}
@@ -711,7 +717,7 @@ CharacterScreenPerksModule.prototype.addListEntryToPerkBuildList = function (_da
 	Object.keys(perkBuild).forEach(function(_key){
 		var perkID = _key
 		var isPlanned = perkBuild[_key]
-		if (isPlanned != PlannedPerkStatus.Planned){
+		if (isPlanned != ModPlanPerks.PlannedPerkStatus.Planned){
 			return
 		}
 		var isUnlocked = isPerkUnlocked(brotherPerks, perkID)
@@ -811,7 +817,7 @@ CharacterScreenPerksModule.prototype.getCurrentlyPlannedPerks = function()
 		for (var i = 0; i < this.mPerkTree[row].length; ++i)
 		{
 			var perk = this.mPerkTree[row][i];
-			if (perk.PlannedStatus == PlannedPerkStatus.Planned) numPlanned++
+			if (perk.PlannedStatus == ModPlanPerks.PlannedPerkStatus.Planned) numPlanned++
 		}
 	}
 	return numPlanned
@@ -869,15 +875,15 @@ CharacterScreenPerksModule.prototype.updatePlanPerksColorSettings = function()
 	{
 		return "rgba(" + _values + ")"
 	}
-	PlannedPerkColorData[2] = {
+	ModPlanPerks.PlannedPerkColorData[2] = {
 		"RGB" : asRGBA(MSU.getSettingValue("mod_plan_perks", "planned_picker")),
 		"Overlay" : MSU.getSettingValue("mod_plan_perks", "planned_shadow")
 	}
-	PlannedPerkColorData[3] = {
+	ModPlanPerks.PlannedPerkColorData[3] = {
 		"RGB" : asRGBA(MSU.getSettingValue("mod_plan_perks", "temporary_picker")),
 		"Overlay" : MSU.getSettingValue("mod_plan_perks", "temporary_shadow")
 	}
-	PlannedPerkColorData[4] = {
+	ModPlanPerks.PlannedPerkColorData[4] = {
 		"RGB" : asRGBA(MSU.getSettingValue("mod_plan_perks", "forbidden_picker")),
 		"Overlay" : MSU.getSettingValue("mod_plan_perks", "forbidden_shadow")
 	}

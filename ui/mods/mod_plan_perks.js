@@ -878,6 +878,7 @@ CharacterScreenPerksModule.prototype.updatePlannedPerkInTree = function (_perk, 
 		}
 		selectionLayer.css("display", "block")
 		selectionLayer.css("border", "2px solid " + ModPlanPerks.PlannedPerkColorData[_perk.PlannedStatus].RGB)
+		selectionLayer.bindTooltip({ contentType: 'ui-_perk', entityId: brotherID, perkId: _perk.ID });
 		if (ModPlanPerks.PlannedPerkColorData[_perk.PlannedStatus].Overlay === false)
 		{
 			selectionOverlay.css("display", "none")
@@ -887,8 +888,7 @@ CharacterScreenPerksModule.prototype.updatePlannedPerkInTree = function (_perk, 
 			selectionOverlay.css("display", "block")
 			selectionOverlay.css("background-color", ModPlanPerks.PlannedPerkColorData[_perk.PlannedStatus].RGB)
 		}
-		selectionLayer.bindTooltip({ contentType: 'ui-_perk', entityId: brotherID, perkId: _perk.ID });
-		selectionLayer.css("display", "block")
+
 	}
 	else{
 		_perk.PlannedStatus = ModPlanPerks.PlannedPerkStatus.Unplanned
@@ -899,11 +899,12 @@ CharacterScreenPerksModule.prototype.updatePlannedPerkInTree = function (_perk, 
 
 CharacterScreenPerksModule.prototype.initPlannedPerksInTree = function (_perkTree,  _brother){
 	this.updatePlanPerksColorSettings();
+	var perk;
 	for (var row = 0; row < _perkTree.length; ++row)
 	{
 		for (var i = 0; i < _perkTree[row].length; ++i)
 		{
-			var perk = _perkTree[row][i];
+			perk = _perkTree[row][i];
 			this.updatePlannedPerkInTree(perk, _brother);
 		}
 	}
@@ -922,6 +923,7 @@ CharacterScreenPerksModule.prototype.findPerkByID = function(_perkID)
 		}
 	}
 }
+
 CharacterScreenPerksModule.prototype.updatePlannedPerkByCallback = function(_data)
 {
 

@@ -114,13 +114,16 @@
 
 	::mods_hookNewObject("ui/screens/character/character_screen", function(o){
 		//see the JS file for documentation about their function
-
 		o.onUpdatePlannedPerk <- function(_data)
 		{
 			//_data = _entity, _perk, _bool
 			local brother = this.Tactical.getEntityByID(_data[0])
 			::PlanYourPerks.PerkManager.updatePlannedPerk(brother, _data[1], _data[2]);
-			return this.UIDataHelper.convertEntityToUIData(brother, null);
+			local ret = {
+				brother = this.UIDataHelper.convertEntityToUIData(brother, null),
+				perkID = _data[1]
+			}
+			return ret;
 		}
 
 		o.onClearPlannedPerks <- function(_data)

@@ -5,10 +5,7 @@ var ModPlanPerks = {
     	Temporary : 3,
     	Forbidden : 4
 	},
-	PlannedPerkColorData : {
-
-	},
-	PlannedPerkMaxToggles : 4
+	PlannedPerkColorData : {},
 }
 
 
@@ -51,41 +48,14 @@ CharacterScreenPerksModule.prototype.attachEventHandler = function(_perk)
 	{
 		if (event.which === 3)
         {
-        	
-        	var callback = function (data)
-		    {
-		        if (data === undefined || data === null || typeof (data) !== 'object')
-		        {
-		            console.error('ERROR: Failed to unlock perk. Invalid data result.');
-		            return;
-		        }
-
-		        // check if we have an error
-		        if (ErrorCode.Key in data)
-		        {
-		            self.notifyEventListener(ErrorCode.Key, data[ErrorCode.Key]);
-		        }
-		        else
-		        {
-		            // find the brother and update him
-		            if (CharacterScreenIdentifier.Entity.Id in data)
-		            {
-		                self.updatePlannedPerkInTree(_perk, data);
-		            }
-		            else
-		            {
-		                console.error('ERROR: Failed to unlock perk. Invalid data result.');
-		            }
-		        }
-		    }
 		    var ctrlPressed = (KeyModiferConstants.CtrlKey in _event && _event[KeyModiferConstants.CtrlKey] === true);
-		    var maxToggle = ModPlanPerks.PlannedPerkMaxToggles;
+		    var maxToggle = ModPlanPerks.PlannedPerkStatus.Forbidden;
 		    if (MSU.getSettingValue("mod_plan_perks", "disable_other_states"))
-		    	maxToggle = 2;
+		    	maxToggle = ModPlanPerks.PlannedPerkStatus.Planned;
         	var newMode = _perk.PlannedStatus + 1
-        	if (newMode > maxToggle || ctrlPressed) newMode = 1;
+        	if (newMode > maxToggle || ctrlPressed) newMode = ModPlanPerks.PlannedPerkStatus.Unplanned;
         	_perk.PlannedStatus = newMode;
-        	self.mDataSource.notifyBackendUpdatePlannedPerk(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], _perk.ID, _perk.PlannedStatus, callback)       	
+        	self.mDataSource.notifyBackendUpdatePlannedPerk(self.mDataSource.getSelectedBrother()[CharacterScreenIdentifier.Entity.Id], _perk.ID, _perk.PlannedStatus, self)
         }
 	});
 }
@@ -900,6 +870,12 @@ CharacterScreenPerksModule.prototype.updatePlannedPerkInTree = function (_perk, 
 	var plannedPerks = _brother["PlannedPerks"]
 	if (_perk.ID in plannedPerks){
 		_perk.PlannedStatus = plannedPerks[_perk.ID];
+		// Failsave/fix
+		if (!(_perk.PlannedStatus in ModPlanPerks.PlannedPerkColorData))
+		{
+			_perk.PlannedStatus = ModPlanPerks.PlannedPerkStatus.Unplanned;
+			this.mDataSource.notifyBackendUpdatePlannedPerk(brotherID, _perk.ID, _perk.PlannedStatus, this)
+		}
 		selectionLayer.css("display", "block")
 		selectionLayer.css("border", "2px solid " + ModPlanPerks.PlannedPerkColorData[_perk.PlannedStatus].RGB)
 		if (ModPlanPerks.PlannedPerkColorData[_perk.PlannedStatus].Overlay === false)
@@ -933,11 +909,51 @@ CharacterScreenPerksModule.prototype.initPlannedPerksInTree = function (_perkTre
 	}
 }
 
+CharacterScreenPerksModule.prototype.findPerkByID = function(_perkID)
+{
+	var perk;
+	for (var row = 0; row < this.mPerkTree.length; ++row)
+	{
+		for (var i = 0; i < this.mPerkTree[row].length; ++i)
+		{
+			perk = this.mPerkTree[row][i];
+			if (perk.ID == _perkID)
+				return perk;
+		}
+	}
+}
+CharacterScreenPerksModule.prototype.updatePlannedPerkByCallback = function(_data)
+{
+
+    if (_data === undefined || _data === null || typeof (_data) !== 'object')
+    {
+        console.error('ERROR: Failed to updatePerkByCallback. Invalid _data result.');
+        return;
+    }
+
+    // check if we have an error
+    if (ErrorCode.Key in _data)
+    {
+        this.notifyEventListener(ErrorCode.Key, _data[ErrorCode.Key]);
+        return;
+    }
+    if(!("perkID" in _data) || !("brother" in _data) || !(CharacterScreenIdentifier.Entity.Id in _data.brother))
+    {
+    	console.error('ERROR: Failed to updatePerkByCallback. Invalid _data result.');
+    	return;
+    }
+    var perk = this.findPerkByID(_data.perkID);
+    if (perk == null)
+    {
+    	console.error("ERROR: Failed to updatePerkByCallback. Can't find perk with ID ."  + _data.perkID);
+    	return;
+    }
+
+    this.updatePlannedPerkInTree(perk, _data.brother);
+}
+
 CharacterScreenDatasource.prototype.modPerkSwitchPreviousBrother = function(_withoutNotify)
 {
-    if (this.mBrothersList == null)
-        return;
-
     var currentIndex = this.mSelectedBrotherIndex;
 
     for (var i = this.mSelectedBrotherIndex - 1; i >= 0; --i)
@@ -1007,9 +1023,13 @@ CharacterScreenDatasource.prototype.modPerkSwitchNextBrother = function(_without
 //BACKEND QUERIES --------------------------------------------------------------------------------------------------------------------------------------------------
 
 //update single planned perk for a specific brother after rightclicking
-CharacterScreenDatasource.prototype.notifyBackendUpdatePlannedPerk = function(_brother, _perkID, _perkValue, _callback)
+CharacterScreenDatasource.prototype.notifyBackendUpdatePlannedPerk = function(_brother, _perkID, _perkValue, _env)
 {
-	SQ.call(this.mSQHandle, 'onUpdatePlannedPerk', [_brother, _perkID, _perkValue], _callback);
+	var callback = function(_data)
+	{
+		_env.updatePlannedPerkByCallback(_data);
+	}
+	SQ.call(this.mSQHandle, 'onUpdatePlannedPerk', [_brother, _perkID, _perkValue], callback);
 }
 
 //clear all planned perks for specific brother

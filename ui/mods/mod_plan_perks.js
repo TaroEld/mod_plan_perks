@@ -250,17 +250,17 @@ CharacterScreenPerksModule.prototype.createCurrentCharacterContainer = function 
 	
 	this.mCurrentCharacterContainer.append(leftColumn)
 
-	this.mBrotherNameContainer = $('.name-container').clone()
-	this.mBrotherNameContainer.css("height", "7rem")
-	leftColumn.append(this.mBrotherNameContainer)
-	this.mPortraitContainer =  $('<div class="perk-portrait-container"/>');
-	leftColumn.append(this.mPortraitContainer)
-	this.mPortraitImage = $('.portrait-container').find("img").eq(1).clone()
+	this.mBrotherNameContainer = $('<div class="name-container"/>')
+		.appendTo(leftColumn)
+		.html($('.character-screen-container .left-panel-header-module .name-container').html());
+	this.mPortraitContainer =  $('<div class="perk-portrait-container"/>')
+		.appendTo(leftColumn)
+	this.mPortraitImage = $('.character-screen-container .left-panel-header-module .portrait-container').find("img").eq(1).clone()
+		.appendTo(this.mPortraitContainer)
 
 
 	this.mSwitchBrotherContainer = $('<div class="switch-brother-button-container"/>');
 	leftColumn.append(this.mSwitchBrotherContainer)
-	this.mPortraitContainer.append(this.mPortraitImage)
 
 	buttonLayout = $('<div class="l-button"/>');
 	this.mSwitchBrotherContainer.append(buttonLayout);
@@ -341,10 +341,10 @@ CharacterScreenPerksModule.prototype.updateDynamicContent = function (_dataSourc
 	
 	this.mPortraitContainer.empty()
 
-	this.mBrotherNameContainer.html($('.name-container').html())
+	this.mBrotherNameContainer.html($('.character-screen-container .left-panel-header-module .name-container').html())
 	//otherwise images are wrong, dimensions or wrong brother
 	setTimeout(function(){
-		self.mPortraitImage = $('.portrait-container').find("img").eq(1).clone()
+		self.mPortraitImage = $('.character-screen-container .left-panel-header-module .portrait-container').find("img").eq(1).clone()
 		self.mPortraitContainer.append(self.mPortraitImage)
 		self.fillPerkImageContainers()
 	}, 25)

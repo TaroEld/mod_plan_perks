@@ -246,13 +246,14 @@ CharacterScreenPerksModule.prototype.createCurrentCharacterContainer = function 
 {
 	var self = this;
 	this.mCurrentCharacterContainer = $('<div class="current-character-container"/>');
+	this.mBrotherNameContainer = $('<div class="name-container"/>')
+		.appendTo(this.mCurrentCharacterContainer)
+		.html($('.character-screen-container .left-panel-header-module .name-container').html());
+
 	var leftColumn = $('<div class="column-left"/>');
 	
 	this.mCurrentCharacterContainer.append(leftColumn)
 
-	this.mBrotherNameContainer = $('<div class="name-container"/>')
-		.appendTo(leftColumn)
-		.html($('.character-screen-container .left-panel-header-module .name-container').html());
 	this.mPortraitContainer =  $('<div class="perk-portrait-container"/>')
 		.appendTo(leftColumn)
 	this.mPortraitImage = $('.character-screen-container .left-panel-header-module .portrait-container').find("img").eq(1).clone()
@@ -567,7 +568,7 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     	if (self.mSortingFunction == "byMissingPerks") self.mSortingFunction = "byMissingPerksReverse"
     	else self.mSortingFunction = "byMissingPerks"
 		self.mDataSource.notifyBackendLoadSavedPerks()
-    }, '', 1)
+    }, '', 4)
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.sort-by-missing-button" });
 
 	buttonLayout = $('<div class="l-button"/>');
@@ -577,7 +578,7 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     	if (self.mSortingFunction == "byAlphabetical") self.mSortingFunction = "byAlphabeticalReverse"
     	else self.mSortingFunction = "byAlphabetical"
 		self.mDataSource.notifyBackendLoadSavedPerks()
-    }, '', 1)
+    }, '', 4)
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.sort-alphabetically-button" });
 
 	buttonLayout = $('<div class="l-button"/>');
@@ -587,7 +588,7 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     	if (self.mSortingFunction == "byMatchingPerks") self.mSortingFunction = "byMatchingPerksReverse"
     	else self.mSortingFunction = "byMatchingPerks"
 		self.mDataSource.notifyBackendLoadSavedPerks()
-    }, '', 1)
+    }, '', 4)
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.sort-by-matching-button" });
 
     var toggleOverrideContainer = $('<div class="override-container"/>');

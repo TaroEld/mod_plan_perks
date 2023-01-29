@@ -224,8 +224,6 @@
 			if (hasDPF){
 				ret.LookupMap <- ::Const.Perks.LookupMap
 			}
-			::logInfo(hasDPF)
-			::MSU.Log.printData(ret, 2, true, 1000)
 			return ret;
 		}
 	})

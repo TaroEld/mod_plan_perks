@@ -208,16 +208,25 @@
 			::PlanYourPerks.PerkManager.serializeBuilds();
 		}
 
-		o.onQueryLegends <- function(_data)
+		o.onQuerySpecialSnowflakeMods <- function(_data)
 		{
 			//data = null
 			local hasLegends = ("LegendsMod" in this.getroottable())
+			local hasDPF = ("DPF" in this.getroottable())
+			local ret = {
+				Legends = hasLegends,
+				DPF = hasDPF,
+				VanillaLookupMap = ::Const.Perks.Perks
+			}
 			if (hasLegends){
-				return [true, this.Const.Perks.PerkDefObjects]
+				ret.PerkDefObjects <- ::Const.Perks.PerkDefObjects
 			}
-			else{
-				return [false]
+			if (hasDPF){
+				ret.LookupMap <- ::Const.Perks.LookupMap
 			}
+			::logInfo(hasDPF)
+			::MSU.Log.printData(ret, 2, true, 1000)
+			return ret;
 		}
 	})
 

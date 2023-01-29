@@ -15,25 +15,30 @@ var ModPlanPerks = {
 var loadPerkTreesWithBrotherData = CharacterScreenPerksModule.prototype.loadPerkTreesWithBrotherData
 CharacterScreenPerksModule.prototype.loadPerkTreesWithBrotherData = function (_brother)
 {
-	loadPerkTreesWithBrotherData.call(this, _brother)
+	loadPerkTreesWithBrotherData.call(this, _brother);
+	if(this.mPerksToImageDict === undefined)
+		return;
+	this.updatePerkToImageDict();
+	this.initPlannedPerksInTree(_brother);
+	this.updatePerkCountLabel();
+};
+
+CharacterScreenPerksModule.prototype.updatePerkToImageDict = function()
+{
 	var self = this;
-	var callback = function(_data){
-		
-		if (CharacterScreenIdentifier.Perk.Key in _brother)
+	$.each(this.mPerksToImageDict, function(_id, _perk)
+	{
+		self.mPerksToImageDict[_id].hasPerkInTree = false;
+	})
+	for (var row = 0; row < this.mPerkTree.length; ++row)
+	{
+		for (var i = 0; i < this.mPerkTree[row].length; ++i)
 		{
-		    if (!_data[0]){
-		    	self.initPerkToImageDict(self.mPerkTree)
-		    }
-		    else {
-		    	self.initPerkToImageDictLegends(_data[1])
-		    }
-		    self.initPlannedPerksInTree(self.mPerkTree, _brother);
-		    self.updatePerkCountLabel();
+			var perk = this.mPerkTree[row][i];
+			this.mPerksToImageDict[perk.ID].hasPerkInTree = true;
 		}
 	}
-	this.mDataSource.notifyBackendQueryForLegends(callback)
-
-};
+}
 
 var attachEventHandler = CharacterScreenPerksModule.prototype.attachEventHandler
 CharacterScreenPerksModule.prototype.attachEventHandler = function(_perk)
@@ -115,6 +120,35 @@ CharacterScreenPerksModule.prototype.hide = function ()
     {
     	this.mPerkCountPanel.removeClass('display-block').addClass('display-none');
     }
+};
+
+var PlanPerks_CharacterScreen_show = CharacterScreen.prototype.show;
+CharacterScreen.prototype.show = function(_outerData)
+{
+	var self = this;
+	var perksmodule = self.mRightPanelModule.mPerksModule;
+	if (perksmodule.mPerksToImageDict === undefined)
+	{
+	    var callback = function(_data){
+			perksmodule.mPerksToImageDict = {};
+			if (_data.Legends)
+			{
+				perksmodule.initPerkToImageDictLegends(_data.PerkDefObjects)
+			}
+		    else if (_data.DPF){
+		    	perksmodule.initPerkToImageDictDPF(_data.LookupMap)
+		    }
+		    else {
+		    	perksmodule.initPerkToImageDictVanilla(_data.VanillaLookupMap)
+		    }
+	    	PlanPerks_CharacterScreen_show.call(self, _outerData);
+	    }
+	    SQ.call(this.mSQHandle, 'onQuerySpecialSnowflakeMods', [], callback);
+	}
+	else
+	{
+		PlanPerks_CharacterScreen_show.call(self, _outerData);
+	}
 };
 
 // DIV CREATION FUNCTIONS ---------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -803,26 +837,54 @@ CharacterScreenPerksModule.prototype.checkForDelimiters = function(_string){
 }
 
 
-CharacterScreenPerksModule.prototype.initPerkToImageDict = function (_perkTree)
+CharacterScreenPerksModule.prototype.updatePerkToImageDict = function()
 {
-	this.mPerksToImageDict = {}
+	var self = this;
+	$.each(this.mPerksToImageDict, function(_id, _perk)
+	{
+		self.mPerksToImageDict[_id].hasPerkInTree = false;
+	})
 	for (var row = 0; row < this.mPerkTree.length; ++row)
 	{
 		for (var i = 0; i < this.mPerkTree[row].length; ++i)
 		{
 			var perk = this.mPerkTree[row][i];
+			this.mPerksToImageDict[perk.ID].hasPerkInTree = true;
+		}
+	}
+}
+
+CharacterScreenPerksModule.prototype.initPerkToImageDictVanilla = function (_perkTree)
+{
+	for (var row = 0; row < _perkTree.length; ++row)
+	{
+		for (var i = 0; i < _perkTree[row].length; ++i)
+		{
+			var perk = this.mPerkTree[row][i];
 			this.mPerksToImageDict[perk.ID] = {
 				unlocked : perk.Icon,
 				locked : perk.IconDisabled,
-				hasPerkInTree: true
+				hasPerkInTree: false
 			}
 		}
 	}
 }
 
+CharacterScreenPerksModule.prototype.initPerkToImageDictDPF = function (_perkTree)
+{
+	var self = this;
+	$.each(_perkTree, function(_id, _perk)
+	{
+		self.mPerksToImageDict[_id] = {
+			unlocked : _perk.Icon,
+			locked : _perk.IconDisabled,
+			hasPerkInTree: false
+		}
+	})
+}
+
 CharacterScreenPerksModule.prototype.initPerkToImageDictLegends = function (_perkTree)
 {
-	this.mPerksToImageDict = {}
 	for (var i = 0; i < _perkTree.length; ++i)
 	{
 		var perk = _perkTree[i];
@@ -830,14 +892,6 @@ CharacterScreenPerksModule.prototype.initPerkToImageDictLegends = function (_per
 			unlocked : perk.Icon,
 			locked : perk.IconDisabled,
 			hasPerkInTree: false
-		}
-	}
-	for (var row = 0; row < this.mPerkTree.length; ++row)
-	{
-		for (var i = 0; i < this.mPerkTree[row].length; ++i)
-		{
-			var perk = this.mPerkTree[row][i];
-			this.mPerksToImageDict[perk.ID].hasPerkInTree = true;
 		}
 	}
 }
@@ -897,14 +951,14 @@ CharacterScreenPerksModule.prototype.updatePlannedPerkInTree = function (_perk, 
 	}
 }
 
-CharacterScreenPerksModule.prototype.initPlannedPerksInTree = function (_perkTree,  _brother){
+CharacterScreenPerksModule.prototype.initPlannedPerksInTree = function (_brother){
 	this.updatePlanPerksColorSettings();
 	var perk;
-	for (var row = 0; row < _perkTree.length; ++row)
+	for (var row = 0; row < this.mPerkTree.length; ++row)
 	{
-		for (var i = 0; i < _perkTree[row].length; ++i)
+		for (var i = 0; i < this.mPerkTree[row].length; ++i)
 		{
-			perk = _perkTree[row][i];
+			perk = this.mPerkTree[row][i];
 			this.updatePlannedPerkInTree(perk, _brother);
 		}
 	}
@@ -1104,9 +1158,9 @@ CharacterScreenDatasource.prototype.notifyBackendDeletePerkBuild = function(_per
 {
 	SQ.call(this.mSQHandle, 'onDeletePerkBuild', [_perkBuildID], _callback);
 }
-CharacterScreenDatasource.prototype.notifyBackendQueryForLegends = function(_callback)
+CharacterScreenDatasource.prototype.notifyBackendQueryForMods = function(_callback)
 {
-	SQ.call(this.mSQHandle, 'onQueryLegends', [], _callback);
+	SQ.call(this.mSQHandle, 'onQuerySpecialSnowflakeMods', [], _callback);
 }
 
 CharacterScreenDatasource.prototype.destroyPopupDialog = function()

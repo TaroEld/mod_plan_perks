@@ -861,7 +861,7 @@ CharacterScreenPerksModule.prototype.initPerkToImageDictVanilla = function (_per
 	{
 		for (var i = 0; i < _perkTree[row].length; ++i)
 		{
-			var perk = this.mPerkTree[row][i];
+			var perk = _perkTree[row][i];
 			this.mPerksToImageDict[perk.ID] = {
 				unlocked : perk.Icon,
 				locked : perk.IconDisabled,

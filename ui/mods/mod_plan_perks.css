@@ -297,7 +297,7 @@
     top: 42%;
 }
 
-
+.perk-build-list-container .sort-bar-header,
 .perk-build-list-container .sort-bar-container
 {
     width: 100%;
@@ -315,13 +315,13 @@
     width: 23.0rem;
     position: relative;
     float: left;
-    height:  4.3rem;
-    line-height: 4.0rem;
+    height:  4.0rem;
+    line-height: 3.8rem;
 }
 
 .perk-build-list-container .sort-bar-button-container .override-container
 {
-    width: 60rem;
+    width: 80rem;
     position: relative;
     left: 2rem;
     float: left;
@@ -378,11 +378,10 @@
     bottom: 0;
     position: absolute;
     line-height: 5.0rem;
-    text-shadow: 1px 1px 1px #000;
-    background-image: url("coui://gfx/ui/skin/perks-list-entry.png");
-    background-size: cover;
-    background-repeat: no-repeat;
-
+    background-color: rgba(0, 0, 0, 0.3);
+    background-image: none;
+    border: 2px solid black;
+    border-radius: 5px;
     display: flex;
     align-items: center;
 } 
@@ -395,9 +394,7 @@
 .perk-build-list-container .ui-control.list .list-entry:hover,
 .perk-build-list-container .ui-control.list .list-entry.is-selected
 {
-    background-image: url("coui://gfx/ui/skin/perks-list-entry-selected.png");
-    background-size: cover;
-    background-repeat: no-repeat;
+    background-color: rgba(0, 0, 0, 0.5);
 }
 
 .perk-build-list-container .l-perk-name-container
@@ -405,6 +402,7 @@
     flex: 1;
     display: flex;
     flex-wrap: wrap;
+    padding-left:2rem;
 }
 
 .perk-build-list-container .l-perk-name-container .perk-name
@@ -460,6 +458,6 @@
 {
     width: 10.5rem;
     height: 4.3rem;
-    line-height: 3.0rem;
+    line-height: 3.7rem;
     text-align: center;
 }

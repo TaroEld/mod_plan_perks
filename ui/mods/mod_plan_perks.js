@@ -556,6 +556,8 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
 
 	this.mPerkBuildListContainer = $('<div class="perk-build-list-container"/>');
 	result.append(this.mPerkBuildListContainer)
+	var filterBarHeader = $('<div class="sort-bar-header title title-font-big font-bold font-bottom-shadow font-color-title">Sort By:</div>')
+		.appendTo(this.mPerkBuildListContainer);
 	var filterBarContainer = $('<div class="sort-bar-container"/>');
 	this.mPerkBuildListContainer.append(filterBarContainer)
 	var filterBarButtonsContainer = $('<div class="sort-bar-button-container"/>');
@@ -563,7 +565,7 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
 
 	buttonLayout = $('<div class="l-button"/>');
 	filterBarButtonsContainer.append(buttonLayout);
-	button = buttonLayout.createTextButton("Sort By Missing Perks", function ()
+	button = buttonLayout.createTextButton("Missing Perks", function ()
     {
     	if (self.mSortingFunction == "byMissingPerks") self.mSortingFunction = "byMissingPerksReverse"
     	else self.mSortingFunction = "byMissingPerks"
@@ -573,7 +575,7 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
 
 	buttonLayout = $('<div class="l-button"/>');
 	filterBarButtonsContainer.append(buttonLayout);
-	button = buttonLayout.createTextButton("Sort Alphabetically", function ()
+	button = buttonLayout.createTextButton("Alphabetically", function ()
     {
     	if (self.mSortingFunction == "byAlphabetical") self.mSortingFunction = "byAlphabeticalReverse"
     	else self.mSortingFunction = "byAlphabetical"
@@ -583,7 +585,7 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
 
 	buttonLayout = $('<div class="l-button"/>');
 	filterBarButtonsContainer.append(buttonLayout);
-	button = buttonLayout.createTextButton("Sort by Unlocked Perks", function ()
+	button = buttonLayout.createTextButton("Unlocked Perks", function ()
     {
     	if (self.mSortingFunction == "byMatchingPerks") self.mSortingFunction = "byMatchingPerksReverse"
     	else self.mSortingFunction = "byMatchingPerks"

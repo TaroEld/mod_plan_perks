@@ -1161,10 +1161,6 @@ CharacterScreenDatasource.prototype.notifyBackendDeletePerkBuild = function(_per
 {
 	SQ.call(this.mSQHandle, 'onDeletePerkBuild', [_perkBuildID], _callback);
 }
-CharacterScreenDatasource.prototype.notifyBackendQueryForMods = function(_callback)
-{
-	SQ.call(this.mSQHandle, 'onQuerySpecialSnowflakeMods', [], _callback);
-}
 
 CharacterScreenDatasource.prototype.destroyPopupDialog = function()
 {

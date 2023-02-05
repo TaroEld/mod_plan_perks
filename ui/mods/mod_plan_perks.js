@@ -20,7 +20,6 @@ CharacterScreenPerksModule.prototype.loadPerkTreesWithBrotherData = function (_b
 		return;
 	this.updatePerkToImageDict();
 	this.initPlannedPerksInTree(_brother);
-	this.updatePerkCountLabel();
 };
 
 CharacterScreenPerksModule.prototype.updatePerkToImageDict = function()
@@ -952,6 +951,7 @@ CharacterScreenPerksModule.prototype.updatePlannedPerkInTree = function (_perk, 
 		selectionLayer.css("display", "none")
 		selectionOverlay.css("display", "none")
 	}
+	this.updatePerkCountLabel();
 }
 
 CharacterScreenPerksModule.prototype.initPlannedPerksInTree = function (_brother){

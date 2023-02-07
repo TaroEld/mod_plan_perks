@@ -212,7 +212,7 @@
 		{
 			//data = null
 			local hasLegends = ("LegendsMod" in this.getroottable())
-			local hasDPF = ("DPF" in this.getroottable())
+			local hasDPF = ("DynamicPerks" in this.getroottable())
 			local ret = {
 				Legends = hasLegends,
 				DPF = hasDPF,

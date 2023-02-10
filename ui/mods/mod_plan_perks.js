@@ -1007,7 +1007,13 @@ CharacterScreenPerksModule.prototype.updatePlannedPerkByCallback = function(_dat
     	console.error("ERROR: Failed to updatePerkByCallback. Can't find perk with ID ."  + _data.perkID);
     	return;
     }
-
+    for (var i = 0; i < this.mDataSource.mBrothersList.length; ++i)
+    {
+        if (this.mDataSource.mBrothersList[i] != null && this.mDataSource.mBrothersList[i][CharacterScreenIdentifier.Entity.Id] === _data.brother[CharacterScreenIdentifier.Entity.Id])
+    	{
+    		this.mDataSource.mBrothersList[i] = _data.brother;
+    	}
+    }
     this.updatePlannedPerkInTree(perk, _data.brother);
 }
 

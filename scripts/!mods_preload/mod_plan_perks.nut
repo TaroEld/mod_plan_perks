@@ -22,7 +22,7 @@
 	visualsPage.addBooleanSetting("planned_shadow", false, "Add a shadow")
 	visualsPage.addDivider("1");
 
-	visualsPage.addColorPickerSetting("temporary_picker", "0,255,0,0.7", "Temporary Color");
+	visualsPage.addColorPickerSetting("temporary_picker", "0,0,255,0.7", "Temporary Color");
 	visualsPage.addBooleanSetting("temporary_shadow", false, "Add a shadow")
 	visualsPage.addDivider("2");
 

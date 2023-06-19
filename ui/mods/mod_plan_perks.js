@@ -368,12 +368,8 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
 	savePerksContainer.append(savePerksFromCodeContainer)
 	result.append(this.createCurrentCharacterContainer())
 
-	var header = $('<div class="header has-no-sub-title"/>');
-	savePerksFromCodeContainer.append(header);
-	var titleTextContainer = $('<div class="text-container"/>');
-	header.append(titleTextContainer);
-	var title = $('<div class="title title-font-big font-bold font-bottom-shadow font-color-title">Save Perk Builds</div>');
-	titleTextContainer.append(title)
+	var title = $('<div class="title-font-big font-bold font-bottom-shadow font-color-title">Save Perk Builds</div>');
+	savePerksFromCodeContainer.append(title)
 
 	//input name for current build, disables the save perks button if empty
     var inputLayout = $('<div class="l-input"/>');
@@ -465,12 +461,8 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
 	result.append(this.mLoadPerkBuildsContainer);
 
 	//header
-	header = $('<div class="header has-no-sub-title"/>');
-	this.mLoadPerkBuildsContainer.append(header);
-	titleTextContainer = $('<div class="text-container"/>');
-	header.append(titleTextContainer);
-	title = $('<div class="title title-font-big font-bold font-bottom-shadow font-color-title">Load Perk Builds</div>');
-	titleTextContainer.append(title)
+	title = $('<div class="title-font-big font-bold font-bottom-shadow font-color-title">Load Perk Builds</div>');
+	this.mLoadPerkBuildsContainer.append(title)
 
 	var loadPerksFromCodeContainer = $('<div class="load-perks-from-code-container"/>');
 	this.mLoadPerkBuildsContainer.append(loadPerksFromCodeContainer)

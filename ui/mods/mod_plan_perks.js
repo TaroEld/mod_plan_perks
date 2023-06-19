@@ -230,10 +230,10 @@ CharacterScreenPerksModule.prototype.showSaveAndLoadPerksDialog = function()
 {
     this.mDataSource.notifyBackendPopupDialogIsVisible(true);
     var self = this;
-    this.mPopupDialog = $('.character-screen').createPopupDialog('Save and Load Perk Builds', null, null, 'save-and-load-perks-popup');
+    this.mPopupDialog = $('.character-screen').createPopupDialog('Plan your perks', null, null, 'save-and-load-perks-popup');
     this.mPopupDialog.addPopupDialogContent(this.createSaveAndLoadPerksDialogContent(this.mPopupDialog));
     this.createScrollContainer()
-    this.mPopupDialog.addPopupDialogButton('Cancel', 'l-cancel-button', function (_dialog)
+    this.mPopupDialog.addPopupDialogButton('Exit', 'l-cancel-button', function (_dialog)
    {
        self.mDataSource.notifyBackendPopupDialogIsVisible(false);
        self.mPopupDialog.destroyPopupDialog();

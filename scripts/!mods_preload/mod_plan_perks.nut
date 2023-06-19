@@ -29,6 +29,8 @@
 	visualsPage.addColorPickerSetting("forbidden_picker", "255,0,0,0.7", "Forbidden Color");
 	visualsPage.addBooleanSetting("forbidden_shadow", true, "Add a shadow")
 
+	::PlanYourPerks.Mod.Keybinds.addJSKeybind("toggleScreen", "ctrl+b", "Open/Close Screen", "Open/Close Plan Perks screen.");
+
 	::mods_hookNewObject("ui/global/data_helper", function(o){
 		local convertEntityToUIData = o.convertEntityToUIData
 		o.convertEntityToUIData = function(_entity, _activeEntity){

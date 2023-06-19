@@ -95,6 +95,11 @@ CharacterScreenPerksModule.prototype.destroyDIV = function ()
 var show = CharacterScreenPerksModule.prototype.show
 CharacterScreenPerksModule.prototype.show = function ()
 {
+	var self = this;
+	$(document).on("keyup.modplanperks", function(_event){
+    	return self.modPlanPerks_toggleScreen(_event);
+    })
+
     show.call(this)
     if (this.mPlanPerksButtonsPanel !== undefined && this.mPlanPerksButtonsPanel !== null)
     {
@@ -110,6 +115,8 @@ var hide = CharacterScreenPerksModule.prototype.hide
 CharacterScreenPerksModule.prototype.hide = function ()
 {
     hide.call(this);
+    this.mDataSource.PlanPerksVisible = false;
+    $(document).off("keyup.modplanperks");
     if (this.mPlanPerksButtonsPanel !== undefined && this.mPlanPerksButtonsPanel !== null)
     {
     	this.mPlanPerksButtonsPanel.removeClass('display-block').addClass('display-none');
@@ -126,6 +133,7 @@ CharacterScreen.prototype.show = function(_outerData)
 {
 	var self = this;
 	var perksmodule = self.mRightPanelModule.mPerksModule;
+	this.mDataSource.PlanPerksVisible = false;
 	if (perksmodule.mPerksToImageDict === undefined)
 	{
 	    var callback = function(_data){
@@ -151,6 +159,23 @@ CharacterScreen.prototype.show = function(_outerData)
 };
 
 // DIV CREATION FUNCTIONS ---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CharacterScreenPerksModule.prototype.modPlanPerks_toggleScreen = function (_event)
+{
+    if (MSU.Keybinds.isKeybindPressed("mod_plan_perks", "toggleScreen", _event))
+	{
+		if (this.mDataSource.PlanPerksVisible === false)
+		{
+			this.showSaveAndLoadPerksDialog();
+			return false;
+		}
+		else if (this.mDataSource.PlanPerksVisible === true)
+		{
+			this.hideSaveAndLoadPerksDialog();
+			return false
+		}
+	}
+};
 
 //buttons to reset and open the popup, listeners
 CharacterScreenPerksModule.prototype.createPerkMenuButtons = function (_parentDiv)
@@ -228,17 +253,24 @@ CharacterScreenPerksModule.prototype.updatePerkCountLabel = function ()
 
 CharacterScreenPerksModule.prototype.showSaveAndLoadPerksDialog = function()
 {
+	var self = this;
+	this.mDataSource.PlanPerksVisible = true;
     this.mDataSource.notifyBackendPopupDialogIsVisible(true);
-    var self = this;
+
     this.mPopupDialog = $('.character-screen').createPopupDialog('Plan your perks', null, null, 'save-and-load-perks-popup');
     this.mPopupDialog.addPopupDialogContent(this.createSaveAndLoadPerksDialogContent(this.mPopupDialog));
     this.createScrollContainer()
     this.mPopupDialog.addPopupDialogButton('Exit', 'l-cancel-button', function (_dialog)
    {
-       self.mDataSource.notifyBackendPopupDialogIsVisible(false);
-       self.mPopupDialog.destroyPopupDialog();
+       self.hideSaveAndLoadPerksDialog()
    })
+};
 
+CharacterScreenPerksModule.prototype.hideSaveAndLoadPerksDialog = function()
+{
+	this.mDataSource.PlanPerksVisible = false;
+   this.mDataSource.notifyBackendPopupDialogIsVisible(false);
+   this.mPopupDialog.destroyPopupDialog();
 };
 
 CharacterScreenPerksModule.prototype.createCurrentCharacterContainer = function ()

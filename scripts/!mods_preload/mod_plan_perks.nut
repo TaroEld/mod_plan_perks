@@ -12,8 +12,8 @@
 	::PlanYourPerks.PerkManager <- this.new("scripts/states/world/perk_manager");
 
 	local generalPage = ::PlanYourPerks.Mod.ModSettings.addPage("General");
-	local bbparser = generalPage.addBooleanSetting("BBParser", false, "Enable BBParser serialising");
-	bbparser.setDescription("If this setting is enabled, perk builds will be printed to your log to be read by the BBParser application. Allows you to save builds between campaigns.");
+	local bbparser = generalPage.addBooleanSetting("BBParser", false, "Enable persistent data");
+	bbparser.setDescription("If this setting is enabled, perk builds will be saved to persistent data. Allows you to save builds between campaigns.");
 
 	generalPage.addBooleanSetting("disable_other_states", false, "Have only one possible state.")
 
@@ -56,7 +56,7 @@
 		o.onDeserialize = function(_in)
 		{
 			onDeserialize(_in);
-			::PlanYourPerks.PerkManager.deserializeBuilds();
+			::PlanYourPerks.PerkManager.deserializeBuilds(_in);
 		}
 		
 		local helper_handleContextualKeyInput = o.helper_handleContextualKeyInput

@@ -658,7 +658,11 @@ CharacterScreenPerksModule.prototype.setupPerkBuildList = function(_datasource, 
 	var divResultList = []
 	
 	for (var key in _data){
-	  divResultList.push(this.addListEntryToPerkBuildList(key))
+		// make sure all perks exist in current game (mods might remove ones)
+		if (this.PlanPerks_isValidBuild(key))
+		{
+	  		divResultList.push(this.addListEntryToPerkBuildList(key))
+		}
 	}
 	var sortingFunctions = {
 		byMatchingPerks : function(a, b) {
@@ -713,6 +717,17 @@ CharacterScreenPerksModule.prototype.setupPerkBuildList = function(_datasource, 
 	for (var div in divResultList){
 		this.mListScrollContainer.append(divResultList[div].div);
 	}
+}
+
+CharacterScreenPerksModule.prototype.PlanPerks_isValidBuild = function (_data)
+{
+	var self = this;
+	var perkBuild = this.mDataSource.mSavedPerkBuilds[_data];
+	var validBuild = true;
+	Object.keys(perkBuild).forEach(function(_key){
+		if (!(_key in self.mPerksToImageDict)) validBuild = false;
+	});
+	return validBuild;
 }
 
 CharacterScreenPerksModule.prototype.addListEntryToPerkBuildList = function (_data)

@@ -1,7 +1,7 @@
 ::PlanYourPerks <- {
 	ID = "mod_plan_perks",
 	Name = "Plan your Perks",
-	Version = "5.0.0"
+	Version = "6.0.0"
 };
 ::mods_registerMod(::PlanYourPerks.ID, ::PlanYourPerks.Version);
 ::mods_queue(null, "mod_msu", function()
@@ -9,10 +9,17 @@
 	::mods_registerJS("mod_plan_perks.js");
 	::mods_registerCSS("mod_plan_perks.css");
 	::PlanYourPerks.Mod <- ::MSU.Class.Mod(::PlanYourPerks.ID, ::PlanYourPerks.Version, ::PlanYourPerks.Name);
+	if ("GitHubTags" in ::MSU.System.Registry.ModSourceDomain)
+	{
+		::PlanYourPerks.Mod.Registry.addModSource(::MSU.System.Registry.ModSourceDomain.GitHubTags, "https://github.com/TaroEld/mod_plan_perks");
+		::PlanYourPerks.Mod.Registry.setUpdateSource(::MSU.System.Registry.ModSourceDomain.GitHubTags);
+	}
+	::PlanYourPerks.Mod.Registry.addModSource(::MSU.System.Registry.ModSourceDomain.NexusMods, "https://www.nexusmods.com/battlebrothers/mods/452");
+
 	::PlanYourPerks.PerkManager <- this.new("scripts/states/world/perk_manager");
 
 	local generalPage = ::PlanYourPerks.Mod.ModSettings.addPage("General");
-	local bbparser = generalPage.addBooleanSetting("BBParser", false, "Enable persistent data");
+	local bbparser = generalPage.addBooleanSetting("BBParser", true, "Enable persistent data");
 	bbparser.setDescription("If this setting is enabled, perk builds will be saved to persistent data. Allows you to save builds between campaigns.");
 
 	generalPage.addBooleanSetting("disable_other_states", false, "Have only one possible state.")
@@ -56,9 +63,14 @@
 		o.onDeserialize = function(_in)
 		{
 			onDeserialize(_in);
-			::PlanYourPerks.PerkManager.deserializeBuilds(_in);
+			::PlanYourPerks.PerkManager.deserializeBuilds();
 		}
-		
+		local startNewCampaign = o.startNewCampaign;
+		o.startNewCampaign = function()
+		{
+			startNewCampaign();
+			::PlanYourPerks.PerkManager.deserializeBuilds();
+		}
 		local helper_handleContextualKeyInput = o.helper_handleContextualKeyInput
 		o.helper_handleContextualKeyInput <- function( _key )
 		{

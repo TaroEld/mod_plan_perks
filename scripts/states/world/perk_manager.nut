@@ -190,24 +190,14 @@ this.perk_manager <- {
 		this.serializeWithPersistentData(resultString);
 	}
 
-	function deserializeBuilds(_in)
+	function deserializeBuilds()
 	{
-		local flag = this.World.Flags.get("Perk_Manager");
-		if (typeof flag != "string" || flag.len() == 0)
+		if (::PlanYourPerks.Mod.ModSettings.getSetting("BBParser").getValue())
 		{
-			if (!::PlanYourPerks.Mod.Serialization.isSavedVersionAtLeast("6.0.0", _in.getMetaData()))
-			{
-				this.deserializeWithBBParser();
-			}
-			else
-			{
-				this.deserializeWithPersistentData();
-			}
+			this.deserializeWithBBParser();
+			this.deserializeWithPersistentData();
 		}
-		else
-		{
-			this.deserializeWithFlags(flag);
-		}
+		this.deserializeWithFlags();
 	}
 
 	function serializeWithFlags(_resultString)
@@ -215,9 +205,14 @@ this.perk_manager <- {
 		this.World.Flags.set("Perk_Manager", _resultString);
 	}
 
-	function deserializeWithFlags(_flag)
+	function deserializeWithFlags()
 	{
-		this.importPerkBuilds(_flag);
+		local flag = this.World.Flags.get("Perk_Manager");
+		if (typeof flag == "string" && flag.len() > 0)
+		{
+			this.importPerkBuilds(flag);
+			this.deserializeWithFlags();
+		}
 	}
 
 	function serializeWithPersistentData(_resultString)
@@ -235,14 +230,12 @@ this.perk_manager <- {
 		local data = ::PlanYourPerks.Mod.PersistentData.readFile(::PlanYourPerks.ID);
 		this.importPerkBuilds(data.PerkBuilds);
 	}
-
+	// will be deprecated
 	function deserializeWithBBParser()
 	{
 		::PlanYourPerks.Mod.PersistentData.loadFile("PerkBuild");
-		local resultString = this.exportPerkBuilds();
-		this.serializeWithPersistentData(resultString);
 	}
-
+	// deprecated
 	function serializeWithBBParser(_resultString)
 	{
 		if (::PlanYourPerks.Mod.ModSettings.getSetting("BBParser").getValue())

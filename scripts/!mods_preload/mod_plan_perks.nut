@@ -9,11 +9,8 @@
 	::mods_registerJS("mod_plan_perks.js");
 	::mods_registerCSS("mod_plan_perks.css");
 	::PlanYourPerks.Mod <- ::MSU.Class.Mod(::PlanYourPerks.ID, ::PlanYourPerks.Version, ::PlanYourPerks.Name);
-	if ("GitHubTags" in ::MSU.System.Registry.ModSourceDomain)
-	{
-		::PlanYourPerks.Mod.Registry.addModSource(::MSU.System.Registry.ModSourceDomain.GitHubTags, "https://github.com/TaroEld/mod_plan_perks");
-		::PlanYourPerks.Mod.Registry.setUpdateSource(::MSU.System.Registry.ModSourceDomain.GitHubTags);
-	}
+	::PlanYourPerks.Mod.Registry.addModSource(::MSU.System.Registry.ModSourceDomain.GitHubTags, "https://github.com/TaroEld/mod_plan_perks");
+	::PlanYourPerks.Mod.Registry.setUpdateSource(::MSU.System.Registry.ModSourceDomain.GitHubTags);
 	::PlanYourPerks.Mod.Registry.addModSource(::MSU.System.Registry.ModSourceDomain.NexusMods, "https://www.nexusmods.com/battlebrothers/mods/452");
 
 	::PlanYourPerks.PerkManager <- this.new("scripts/states/world/perk_manager");

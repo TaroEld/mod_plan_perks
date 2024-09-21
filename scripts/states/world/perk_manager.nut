@@ -211,7 +211,6 @@ this.perk_manager <- {
 		if (typeof flag == "string" && flag.len() > 0)
 		{
 			this.importPerkBuilds(flag);
-			this.deserializeWithFlags();
 		}
 	}
 

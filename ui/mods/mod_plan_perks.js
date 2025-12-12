@@ -389,9 +389,6 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     _dialog.append(result);
 	var self = this;
 
-	var topDivider = $('<div class="divider-horizontal above-save-perk"/>');
-	result.append(topDivider)
-
 	//SAVE PERK BUILDS DIV -------------------------------------------------------------------------------------------------------------------------------------------------
 	var savePerksContainer = $('<div class="save-perk-builds-container"/>');
 	result.append(savePerksContainer)
@@ -484,9 +481,6 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.copy-all-perks-button" });
     
 
-    var midDivider = $('<div class="divider-horizontal between-perk"/>');
-    result.append(midDivider)
-
     //LOAD PERKS DIV -----------------------------------------------------------------------------------------------------------------------------------------
 
 	this.mLoadPerkBuildsContainer = $('<div class="load-perk-builds-container"/>');
@@ -569,10 +563,6 @@ CharacterScreenPerksModule.prototype.createSaveAndLoadPerksDialogContent = funct
     }, '', 1)
     button.bindTooltip({ contentType: 'ui-element', elementId: "mod-plan-perks.menu.load-all-builds-button" });
 
-
-
-    var botDivider = $('<div class="divider-horizontal below-load-perk"/>');
-    result.append(botDivider)
 
 	//Container for filter bar and scrolling list -----------------------------------------------------------------------
 

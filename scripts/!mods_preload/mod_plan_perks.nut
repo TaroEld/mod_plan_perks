@@ -222,7 +222,7 @@
 		o.onQuerySpecialSnowflakeMods <- function(_data)
 		{
 			//data = null
-			local hasLegends = ("LegendsMod" in this.getroottable())
+			local hasLegends = ("Legends" in this.getroottable())
 			local hasDPF = ("DynamicPerks" in this.getroottable())
 			local ret = {
 				Legends = hasLegends,

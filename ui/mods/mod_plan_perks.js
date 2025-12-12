@@ -12,32 +12,15 @@ var ModPlanPerks = {
 
 // HOOKED FUNCTIONS --------------------------------------------------------------------------------------------------------------------
 
-var loadPerkTreesWithBrotherData = CharacterScreenPerksModule.prototype.loadPerkTreesWithBrotherData
+var plan_perks_loadPerkTreesWithBrotherData = CharacterScreenPerksModule.prototype.loadPerkTreesWithBrotherData
 CharacterScreenPerksModule.prototype.loadPerkTreesWithBrotherData = function (_brother)
 {
-	loadPerkTreesWithBrotherData.call(this, _brother);
+	plan_perks_loadPerkTreesWithBrotherData.call(this, _brother);
 	if(this.mPerksToImageDict === undefined)
 		return;
 	this.updatePerkToImageDict();
 	this.initPlannedPerksInTree(_brother);
 };
-
-CharacterScreenPerksModule.prototype.updatePerkToImageDict = function()
-{
-	var self = this;
-	$.each(this.mPerksToImageDict, function(_id, _perk)
-	{
-		self.mPerksToImageDict[_id].hasPerkInTree = false;
-	})
-	for (var row = 0; row < this.mPerkTree.length; ++row)
-	{
-		for (var i = 0; i < this.mPerkTree[row].length; ++i)
-		{
-			var perk = this.mPerkTree[row][i];
-			this.mPerksToImageDict[perk.ID].hasPerkInTree = true;
-		}
-	}
-}
 
 var attachEventHandler = CharacterScreenPerksModule.prototype.attachEventHandler
 CharacterScreenPerksModule.prototype.attachEventHandler = function(_perk)
@@ -784,9 +767,7 @@ CharacterScreenPerksModule.prototype.addListEntryToPerkBuildList = function (_da
 		currentLeft += 3;
 
 	}.bind(this))
-	for (var x = 0; x < perkBuild.length; x++){
 
-	}
 
 	var buttonContainer = $('<div class="l-perk-button-container"/>');
 	entry.append(buttonContainer)

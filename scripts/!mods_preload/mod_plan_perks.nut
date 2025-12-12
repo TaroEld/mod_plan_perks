@@ -1,7 +1,7 @@
 ::PlanYourPerks <- {
 	ID = "mod_plan_perks",
 	Name = "Plan your Perks",
-	Version = "6.0.1"
+	Version = "6.1.0"
 };
 ::mods_registerMod(::PlanYourPerks.ID, ::PlanYourPerks.Version);
 ::mods_queue(null, "mod_msu", function()
